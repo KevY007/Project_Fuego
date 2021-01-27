@@ -1,10 +1,13 @@
 
 <h1 align="center">Project Fuego</h1>
 
- <h3> **Private edit of s0biet for San Andreas Multiplayer. https://sa-mp.com** </h3>
+ <h3> Private edit of s0biet for San Andreas Multiplayer. 
+ https://sa-mp.com </h3>
 
 <br>
 </br>
+
+**Used mainly for educational purposes and reverse engineering GTA San Andreas & Multiplayer code to understand the game engine better.**
 
 
 # Created by KevY007.
