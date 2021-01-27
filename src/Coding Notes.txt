@@ -1,0 +1,14 @@
+
+Setting for menu (Anttweakbar) is set.key_atbmenu
+AntTweakBar current toggle status is set.atbmenu_enabled
+
+AntTweakBar is initiated in proxyIDirect3DDevice9.cpp at proxyID3DDevice9_InitOurShit
+TwWindowSize(myWindowWidth, myWindowHeight); for telling anttweakbar for windowed mode and fullscreen changes is done at proxyID3DDevice9_InitWindowMode and proxyID3DDevice9_InitOurShit
+
+TwDraw is rendered/called at RenderHandler() in the same cpp file as the twinit one
+TwTerminate() is called at proxyID3DDevice9_UnInitOurShit
+
+AntTweakBar toggle code is at void menu_run ( void ) in dumb_menu.cpp
+ATB atb_menu.cpp's Init_Menu function is called in dumb_menu.cpp's menu_maybe_init
+
+RPC and Packet handler are at cheat_samp.cpp   OnReceivePacket callback and so above it is RPC callback
