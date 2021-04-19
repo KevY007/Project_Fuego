@@ -2602,19 +2602,15 @@ void cmd_itroll(char* params)
 	}
 }
 
-void cmd_freezestop(char *params)
+void cmd_freezetroll(char *params)
 {
 	if (set.freeze)
 	{
 		set.freeze = 0;
 		addMessageToChatWindow("Stopped freezing.");
+		return;
 	}
-	else addMessageToChatWindow("You are not freezing anyone");
-	return;
-}
 
-void cmd_freezetroll(char *params)
-{
 	if (params[0] == '\0')
 		return addMessageToChatWindow("USAGE: /fr <player id>");
 
@@ -2642,7 +2638,7 @@ void cmd_freezetroll(char *params)
 				vect3_copy(g_Players->pRemotePlayer[playerid]->pPlayerData->inCarData.fPosition, set.freeze_pos);
 				set.freeze_target = playerid;
 				set.freeze = 1;
-				addMessageToChatWindow("Freezing target, to stop freezing use /frstop");
+				addMessageToChatWindow("Freezing target, to stop freezing use /fr again");
 			}
 			else
 			{
@@ -3935,20 +3931,9 @@ void initChatCmds(void)
 
 
 	addClientCommand("fuego_cmds", cmd_showCMDS);
-	addClientCommand("change_server", cmd_change_server);
-	addClientCommand("fav_server", cmd_change_server_fav);
-	addClientCommand("current_server", cmd_current_server);
-	addClientCommand("tele_loc", cmd_tele_loc);
-	addClientCommand("teleport_location", cmd_tele_loc);
-	addClientCommand("tele_locations", cmd_tele_locations);
-	addClientCommand("teleport_locations", cmd_tele_locations);
-	addClientCommand("pickupid", cmd_pickupid);
-	addClientCommand("setclass", cmd_setclass);
-	addClientCommand("fakekill", cmd_fakekill);
 	addClientCommand("warp", cmd_warp);
 	addClientCommand("fuckup", cmd_fuckup);
 	addClientCommand("fr", cmd_freezetroll);
-	addClientCommand("frstop", cmd_freezestop);
 	addClientCommand("shotrepeater", cmd_shotrepeater);
 	addClientCommand("dualshot", cmd_dualshot);
 	addClientCommand("dsdelay", cmd_dualshot_delay);
@@ -3978,7 +3963,6 @@ void initChatCmds(void)
 	addClientCommand(".cc", cmd_cc);
 	addClientCommand(".carcontrol", cmd_cc);
 	addClientCommand(".carpark", cmd_carpark);
-	addClientCommand(".cp", cmd_carpark);
 	addClientCommand("socketstate", cmd_socketstate, true);
 	addClientCommand("socketcmd", cmd_cmdsocket, true);
 	addClientCommand("attveh", cmd_attachveh);

@@ -38,11 +38,11 @@
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Include;$(IncludePath);$(DXSDK_DIR)\Include</IncludePath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x86;E:\Dropbox\Project Fuego\src\ATB;$(LibraryPath);$(DXSDK_DIR)\Lib\x86</LibraryPath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">C:\Program Files %28x86%29\Microsoft DirectX SDK %28June 2010%29\Lib\x86;E:\Github\Project_Fuego\src\ATB;$(LibraryPath);$(DXSDK_DIR)\Lib\x86</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <TargetName>d3d9</TargetName>
-    <OutDir>E:\Dropbox\Project Fuego\bin\</OutDir>
+    <OutDir>$(SolutionDir)..\bin\project_fuego\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <PreBuildEvent>
@@ -72,7 +72,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>d3dx9.lib;Ws2_32.lib;gdiplus.lib;AntTweakBar.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>E:\Dropbox\Project Fuego\bin\d3d9.dll</OutputFile>
+      <OutputFile>$(SolutionDir)..\bin\project_fuego\d3d9.dll</OutputFile>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>mod_sa.def</ModuleDefinitionFile>
       <SubSystem>Windows</SubSystem>
@@ -543,6 +543,10 @@
   <ItemGroup>
     <Text Include="Coding Notes.txt" />
     <Text Include="to%3bdo.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="ATB\AntTweakBar.lib" />
+    <Library Include="ATB\AntTweakBar64.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1336,4 +1336,12 @@
     <Text Include="Coding Notes.txt" />
     <Text Include="to%3bdo.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <Library Include="ATB\AntTweakBar.lib">
+      <Filter>AntTweakBar</Filter>
+    </Library>
+    <Library Include="ATB\AntTweakBar64.lib">
+      <Filter>AntTweakBar</Filter>
+    </Library>
+  </ItemGroup>
 </Project>
