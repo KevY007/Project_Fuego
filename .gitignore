@@ -250,3 +250,5 @@ pip-log.txt
 *.out
 *.app
 bin/d3d9.dll
+bin/mod_sa_proxy.lib
+bin/mod_sa_proxy.exp
