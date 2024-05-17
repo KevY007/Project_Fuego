@@ -1340,8 +1340,5 @@
     <Library Include="ATB\AntTweakBar.lib">
       <Filter>AntTweakBar</Filter>
     </Library>
-    <Library Include="ATB\AntTweakBar64.lib">
-      <Filter>AntTweakBar</Filter>
-    </Library>
   </ItemGroup>
 </Project>
