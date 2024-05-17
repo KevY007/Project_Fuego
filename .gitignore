@@ -1,3 +1,5 @@
+src/.vs
+
 # Copied from S0biet Default
 #################
 ## Eclipse
@@ -6,7 +8,6 @@
 *.pydevproject
 .project
 .metadata
-bin/
 tmp/
 *.tmp
 *.bak
@@ -235,7 +236,6 @@ pip-log.txt
 # Compiled Dynamic libraries
 *.so
 *.dylib
-*.dll
 
 # Fortran module files
 *.mod
@@ -245,7 +245,6 @@ pip-log.txt
 *.lai
 *.la
 *.a
-*.lib
 
 # Executables
 *.exe
