@@ -19,7 +19,7 @@
     <CharacterSet>MultiByte</CharacterSet>
     <CLRSupport>false</CLRSupport>
     <WholeProgramOptimization>false</WholeProgramOptimization>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -91,8 +91,9 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </Manifest>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>del /Q /F $(SolutionDir)..\bin\mod_sa_proxy.exp
+del /Q /F $(SolutionDir)..\bin\mod_sa_proxy.lib
+del /Q /F $(SolutionDir)..\bin\d3d9.pdb</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

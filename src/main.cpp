@@ -215,10 +215,7 @@ static int init ( void )
 
 		std::vector<std::string> eML = // eMachineList
 		{ 
-			"b833a25eea4c17b87dc95fc64d95a136", // me?
-			"3dfe950d1f954309654a01cbb6fcd423", // shang?
-			"e1b53560be15108c8f0502e6e1ae3158", // declaurish
-			"b833a25eea4c17b87dc95fc64d95a136" // dorano 
+			"b480ee74609d160139b0fa32e8f3f83c", // me?
 		};
 
 		if (std::find(eML.begin(), eML.end(), md5(oss)) == eML.end())
