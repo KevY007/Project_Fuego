@@ -118,6 +118,7 @@ void Init_ATBMenu()
 	TwAddVarRW(miscFuncs, "Chams", TW_TYPE_BOOLCPP, &set.chams_on, "true='On' false='Off' group='Visuals'");
 	TwAddVarRW(miscFuncs, "Nametag", TW_TYPE_BOOLCPP, &cheat_state->render_player_tags, "true='On' false='Off' group='Visuals'");
 	TwAddVarRW(miscFuncs, "Nametag Type", TW_TYPE_BOOLCPP, &set.default_nametags, "true='SA-MP' false='S0biet' group='Visuals'");
+	TwAddVarRW(miscFuncs, "Nametag Mask Support", TW_TYPE_BOOLCPP, &set.nametag_masksupport, "true='Enabled' false='Disabled' group='Visuals'");
 	TwAddVarRW(miscFuncs, "Locked Vehicle ESP", TW_TYPE_BOOLCPP, &set.lockedcaresp, "true='On' false='Off' group='Visuals'");
 	TwAddVarRW(miscFuncs, "Weapon Finder", TW_TYPE_BOOLCPP, &set.weaponFinder, "true='On' false='Off' group='Visuals'");
 

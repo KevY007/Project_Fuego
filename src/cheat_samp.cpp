@@ -1083,6 +1083,51 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 				allow_show_again = GetTickCount() + 5000;
 				break;
 			}
+			
+			/*case RPC_ShowPlayerNameTagForPlayer:
+			{
+				traceLastFunc("Processing ShowPlayerNameTagForPlayer for Masked Nametag");
+				uint16_t wPlayerID = uint16_t(-1);
+				uint8_t show = 1;
+
+				BitStream		bsData(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
+
+				bsData.Read(wPlayerID);
+				if (wPlayerID < 0 || wPlayerID > 1000)
+					break;
+
+				bsData.Read(show);
+
+				set.nametag_masked[wPlayerID] = !show;
+				break;
+			}*/
+			/*case RPC_WorldPlayerRemove:
+			{
+				UINT16 wPlayerID;
+
+				BitStream		bsData(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
+
+				bsData.Read(wPlayerID);
+				if (wPlayerID < 0 || wPlayerID > 1000)
+					break;
+
+				set.nametag_masked[wPlayerID] = 0;
+				break;
+			}*/
+			/*case RPC_ServerJoin:
+			{
+				traceLastFunc("Processing ServerJoin for Masked Nametag");
+				UINT16 wPlayerID = uint16_t(-1);
+
+				BitStream		bsData(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
+
+				bsData.Read(wPlayerID);
+				if (wPlayerID < 0 || wPlayerID > 1000)
+					break;
+
+				set.nametag_masked[wPlayerID] = 0;
+				break;
+			}*/
 		} // switch
 	}
 	callback(rpcParams);

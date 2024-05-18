@@ -20,6 +20,8 @@
 	along with mod_sa.  If not, see <http://www.gnu.org/licenses/>.
 
 */
+
+
 #define INI_STRLEN_MAX		64	/* including null */
 #define INI_PATCHES_MAX		96
 #define INI_SAMPPATCHES_MAX 128 /*64*/
@@ -296,6 +298,8 @@ struct settings
 	int						smarthealthhack;
 	int						smarthhproc;
 	int						default_nametags;
+	int						nametag_masksupport;
+	int						nametag_masked[1004];
 	int						silentaim_iAimID;
 	float					silentaim_lastAimDist;
 	bool					silentaim_letGo;
@@ -427,6 +431,8 @@ struct settings
 	float tempnt_dist;
 	uint8_t tempnt_nt;
 	int tempnt_walls;
+	short tempnt_thruWalls;
+	DWORD tempnt_updateTick;
 
 	/* DONT TOUCH */
 
