@@ -3459,6 +3459,11 @@ void proxyID3DDevice9_InitOurShit ( D3DPRESENT_PARAMETERS *pPresentationParamete
 	// supposedly this worked so set init state
 	// this should probably actually check eventually
 	bD3DRenderInit = true;
+
+	float fontSize = min(pPresentParam.BackBufferWidth / 1600.0f, pPresentParam.BackBufferHeight / 900.0f);
+	TwDefine((" GLOBAL fontscaling=" + std::to_string(fontSize) + " ").c_str());
+	Log("ATB Font Size: %0.2f", fontSize);
+
 	TwInit(TW_DIRECT3D9, origIDirect3DDevice9);
 	TwWindowSize(pPresentationParameters->BackBufferWidth, pPresentationParameters->BackBufferHeight);
 }

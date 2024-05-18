@@ -11,11 +11,31 @@ void Init_ATBMenu()
 	TwBar *vehFuncs = TwNewBar("vehFuncs");
 	TwBar *miscFuncs = TwNewBar("miscFuncs");
 
-	TwDefine(" 'MainMenu' size='376 272' position='778 130' iconifiable=false iconified=false");
-	TwDefine(" 'wepFuncs' size='375 440' position='780 407'  iconifiable=false iconified=false");
-	TwDefine(" 'vehFuncs' size='410 441' position='365 406' iconifiable=false iconified=false");
-	TwDefine(" 'miscFuncs' size='422 439' position='1160 408' iconifiable=false iconified=false");
+	// font scaled in proxyIDirect3DDevice9.cpp before TwInit
+	float scaleX = pPresentParam.BackBufferWidth / 1600.0f; // positions were taken in 1600x900
+	float scaleY = pPresentParam.BackBufferHeight / 900.0f; // so were the sizes
 
+	std::vector<std::vector<std::string>> menuAndDims = {
+		// name, sizeX, sizeY, posX, posY
+		{"MainMenu", "376", "272", "778", "130"},
+		{"wepFuncs", "375", "440", "780", "407"},
+		{"vehFuncs", "410", "441", "365", "406"},
+		{"miscFuncs", "422", "439", "1160", "408"},
+	};
+
+	Log("ATB Window Scale: %0.2f %0.2f (%dx%d -> %dx%d)", scaleX, scaleY, 1600, 900, pPresentParam.BackBufferWidth, pPresentParam.BackBufferHeight);
+	for (unsigned int i = 0; i < menuAndDims.size(); i++)
+	{
+		std::string name = menuAndDims[i][0];
+		int sizeX = std::round(std::stof(menuAndDims[i][1]) * scaleX);
+		int sizeY = std::round(std::stof(menuAndDims[i][2]) * scaleY);
+		int posX = std::round(std::stof(menuAndDims[i][3]) * scaleX);
+		int posY = std::round(std::stof(menuAndDims[i][4]) * scaleY);
+
+		char buf[128] = { 0 };
+		sprintf(buf, " '%s' size='%d %d' position='%d %d' iconifiable=false iconified=false", name.c_str(), sizeX, sizeY, posX, posY);
+		TwDefine(buf);
+	}
 
 	TwDefine(" 'MainMenu' label='[>] Project Fuego [<]' color='183 33 33' movable=true resizable=true alpha=235 visible=true text=light help='What do you expect?'");
 	TwDefine(" 'wepFuncs' label='[>] Weapon Functions [<]' color='255 165 0' movable=true resizable=true alpha=204 visible=true text=light help='All hacks which involve weapon go under here.'");
@@ -35,7 +55,8 @@ void Init_ATBMenu()
 	TwAddButton(mainMenu, "toggleVehFuncs", ToggleVehicleBar, NULL, "label='Toggle Vehicle Functions'");
 	TwAddButton(mainMenu, "toggleMiscFuncs", ToggleMiscBar, NULL, "label='Toggle Miscellaneous Functions'");
 
-	TwAddButton(mainMenu, "Credits", NULL, NULL, " label='     Made with <3' ");
+	TwAddButton(mainMenu, "Credits", NULL, NULL, " label='     Death to Israel' ");
+	TwAddButton(mainMenu, "Credits2", NULL, NULL, " label='     Free Palestine' ");
 
 	TwAddButton(mainMenu, "space1", NULL, NULL, " label=' ' ");
 	TwAddButton(mainMenu, "space2", NULL, NULL, " label=' ' ");
