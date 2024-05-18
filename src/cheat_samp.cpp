@@ -2342,7 +2342,7 @@ void cmd_fuckup(char *params)
 	if (g_Players->pRemotePlayer[playerid]->pPlayerData == nullptr
 		|| g_Players->pRemotePlayer[playerid]->pPlayerData->pSAMP_Actor == nullptr)
 	{
-		if(!ValidPlayer(playerid)) return addMessageToChatWindow("Player is not streamed in.");
+		return addMessageToChatWindow("Player is not streamed in.");
 	}
 
 	if (fuckupWorking != -1) return addMessageToChatWindow("Please wait before spamming more fuckups.");
@@ -2436,7 +2436,7 @@ void cmd_itroll(char* params)
 	if (g_Players->pRemotePlayer[playerid]->pPlayerData == nullptr
 		|| g_Players->pRemotePlayer[playerid]->pPlayerData->pSAMP_Actor == nullptr)
 	{
-		if (!ValidPlayer(playerid)) return addMessageToChatWindow("Player is not streamed in.");
+		return addMessageToChatWindow("Player is not streamed in.");
 	}
 
 	if (iTrollWorking > -1) return addMessageToChatWindow("Please wait before for iTroll to finish as it cant be spammed.");
@@ -2619,7 +2619,7 @@ void cmd_freezetroll(char *params)
 	if (g_Players->pRemotePlayer[playerid]->pPlayerData == nullptr
 		|| g_Players->pRemotePlayer[playerid]->pPlayerData->pSAMP_Actor == nullptr)
 	{
-		if (!ValidPlayer(playerid)) return addMessageToChatWindow("Player is not streamed in.");
+		return addMessageToChatWindow("Player is not streamed in.");
 	}
 	if (cheat_state->state != CHEAT_STATE_VEHICLE)
 	{
@@ -2672,7 +2672,7 @@ void cmd_slapkill(char* params)
 	if (g_Players->pRemotePlayer[playerid]->pPlayerData == nullptr
 		|| g_Players->pRemotePlayer[playerid]->pPlayerData->pSAMP_Actor == nullptr)
 	{
-		if (!ValidPlayer(playerid)) return addMessageToChatWindow("Player is not streamed in.");
+		return addMessageToChatWindow("Player is not streamed in.");
 	}
 
 	if (ValidPlayer(playerid))
