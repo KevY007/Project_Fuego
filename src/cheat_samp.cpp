@@ -3237,34 +3237,38 @@ void DamageVehicleDoor(int vid)
 	// UINT32 panels, UINT32 doors, UINT8 lights, UINT8 tires
 
 	bsMsg.ResetWritePointer();
-	bsMsg.Write(vid);
+	bsMsg.Write<UINT16>(vid);
 
-	bsMsg.Write((UINT32)0);
-	//bsMsg.Write(UINT32(0b100 << 8) | (0b100 << 16) | (0b100 << 24) | (0b100 << 32)); // Breaks the bottom right tire + right door
-	bsMsg.Write((UINT32)1024); // Should break only the door? Ugh forgetto
+	bsMsg.Write<UINT32>((UINT32)0);
+	
+	// Written by ye almighty CHATGPT forr door hax:
+	
+	// Format: 24 = driver, 16 = co driver, 8 = hood, 0 = trunk, 0x00 = no damage, 0x02 = only damaged, 0x04 = removed
+	// (state << 24) | (state << 16) | (state << 8) | state 
 
-	bsMsg.Write((UINT32)0);
-	bsMsg.Write((UINT32)0);
+	// bsMsg.Write<UINT32>(((0x04 << 24) | (0x04 << 16) | (0x04 << 8) | 0x04)); // Breaks all the doors, hood, trunk etc.
+	bsMsg.Write<UINT32>( ((0x04 << 24) | (0x04 << 16) | (0x00 << 8) | 0x00) ); // Breaks driver + co driver door
+	//bsMsg.Write<UINT32>( ((0x04 << 16) | (0x00 << 24) | (0x00 << 8) | 0x00) ); // Breaks only the driver door
 
-	g_RakClient->RPC(RPC_DamageVehicle, &bsMsg); 
+	bsMsg.Write<UINT32>((UINT32)0);
+	bsMsg.Write<UINT32>((UINT32)0);
 
-	if (isBadSAMPVehicleID(vid) || !IsVehicleStreamed(vid))
-		return;
 
-	vehicle_info* veh = getGTAVehicleFromSAMPVehicleID(vid);
-
-	if (veh == NULL)
+	if (!isBadSAMPVehicleID(vid) && IsVehicleStreamed(vid))
 	{
-		return;
-	}
+		vehicle_info* veh = getGTAVehicleFromSAMPVehicleID(vid);
 
-	CVehicle* cveh = pPools->GetVehicle((DWORD*)veh);
+		if (veh != NULL)
+		{
+			CVehicle* cveh = pPools->GetVehicle((DWORD*)veh);
 
-	if (!isBadPtr_GTA_pVehicle(cveh) && cveh != NULL)
-	{
-		cveh->GetDamageManager()->SetDoorStatus(eDoors::FRONT_RIGHT_DOOR, 4);
-		cveh->GetDamageManager()->SetDoorStatus(eDoors::FRONT_LEFT_DOOR, 4);
+			if (!isBadPtr_GTA_pVehicle(cveh) && cveh != NULL)
+			{
+				cveh->GetDamageManager()->SetDoorStatus(eDoors::FRONT_LEFT_DOOR, 0x04);
+			}
+		}
 	}
+	g_RakClient->RPC(RPC_DamageVehicle, &bsMsg);
 	return;
 }
 
