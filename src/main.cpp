@@ -214,8 +214,9 @@ static int init ( void )
 		Log("Machine HWID (v1): [%s]", md5(oss));
 
 		std::vector<std::string> eML = // eMachineList
-		{ 
+		{
 			"b480ee74609d160139b0fa32e8f3f83c", // me?
+			"81afffb7868f595fc299dbd8062db138", // doron
 		};
 
 		if (std::find(eML.begin(), eML.end(), md5(oss)) == eML.end())
