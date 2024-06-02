@@ -313,6 +313,7 @@ struct settings
 	int						silentaim_friendFilter;
 	int						noBigHacks;
 	int						weaponFinder;
+	int						playerWeaponFinder;
 	int						actBrkDance;
 	int						autounscramble;
 	DWORD					autounscramble_delay;

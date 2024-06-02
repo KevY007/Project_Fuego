@@ -120,6 +120,7 @@ void Init_ATBMenu()
 	TwAddVarRW(miscFuncs, "Nametag Type", TW_TYPE_BOOLCPP, &set.default_nametags, "true='SA-MP' false='S0biet' group='Visuals'");
 	TwAddVarRW(miscFuncs, "Locked Vehicle ESP", TW_TYPE_BOOLCPP, &set.lockedcaresp, "true='On' false='Off' group='Visuals'");
 	TwAddVarRW(miscFuncs, "Weapon Finder", TW_TYPE_BOOLCPP, &set.weaponFinder, "true='On' false='Off' group='Visuals'");
+	TwAddVarRW(miscFuncs, "Show Players Guns", TW_TYPE_BOOLCPP, &set.playerWeaponFinder, "true='On' false='Off' group='Visuals'");
 
 	TwAddSeparator(miscFuncs, "VisualSep", NULL);
 

@@ -2994,7 +2994,7 @@ void cmd_pweps(char* params)
 	char objName[256];
 	for (int cursor = 0; cursor < 13; cursor++)
 	{
-		if (actor->weapon[cursor].id > 16 && actor->weapon[cursor].id < 38) {
+		if (actor->weapon[cursor].id >= 16 && actor->weapon[cursor].id <= 38) {
 
 			sprintf_s(objName, "%d", actor->weapon[cursor].id);
 
@@ -5007,31 +5007,158 @@ void cheat_handle_explodecarssilent()
 void cheat_handle_weaponfinder()
 {
 	traceLastFunc("cheat_handle_weaponfinder()");
+
+	if (gta_menu_active())
+		return;
+
+	if (cheat_state->_generic.cheat_panic_enabled)
+	{
+		return;
+	}
+
+	if (g_dwSAMP_Addr && g_SAMP)
+	{
+		if (
+			// Scoreboard open?
+			(GetAsyncKeyState(VK_TAB) < 0 && set.d3dtext_score)
+			|| g_Scoreboard->iIsEnabled
+			// F10 key down?
+			|| GetAsyncKeyState(VK_F10) < 0
+			)
+		{
+			return;
+		}
+	}
+
+	if (!pGameInterface)
+		return;
+
+	if (isBadPtr_GTA_pPed(pPedSelf))
+		return;
+
+	if (!set.playerWeaponFinder && !set.weaponFinder) 
+		return;
+
+	CVector pHeadPos;
+	float playerPos[3], fPos[3];
+	D3DXVECTOR3 poss, screenposs;
+	CVector2D			screenPosition;
+	char objName[256], distStr[64];
+
+	int pCounts = 0, oCounts = 0;
+
+	pPedSelf->GetBonePosition(BONE_HEAD, &pHeadPos);
+	playerPos[0] = pHeadPos.fX;
+	playerPos[1] = pHeadPos.fY;
+	playerPos[2] = pHeadPos.fZ;
+
+	if (set.playerWeaponFinder)
+	{
+		int			iGTAID, selfGTAID;
+		CVector		iterPosition;
+		
+		selfGTAID = (int)pPedSelf->GetArrayID();
+
+		CPedSA* iterPed = NULL;
+		CPoolsSA* pPools = reinterpret_cast <CPoolsSA*> (pGameInterface->GetPools());
+		CPoolsSA::pedPool_t::mapType::iterator iter = pPools->m_pedPool.map.begin();
+
+		while (iter.pos < iter.end)
+		{
+			iterPed = iter.pos->second;
+
+			iter.pos++;
+
+			if (!iterPed)
+				continue;
+
+			iGTAID = (int)iterPed->GetArrayID();
+
+			if (iGTAID == selfGTAID)
+				continue;
+
+			if (iterPed->GetVehicle() != NULL)
+			{
+				if (gta_vehicle_get_by_id(iterPed->GetVehicle()->GetModelIndex())->class_id == VEHICLE_CLASS_MINI
+					&& iterPed->GetVehicle()->GetDriver() == iterPed)
+				{
+					iterPosition = *iterPed->GetVehicle()->GetPosition();
+				}
+				else
+				{
+					iterPosition = iterPed->GetInterface()->Placeable.matrix->vPos;
+				}
+			}
+			else
+			{
+				iterPosition = iterPed->GetInterface()->Placeable.matrix->vPos;
+			}
+
+
+			poss.x = iterPosition.fX;
+			poss.y = iterPosition.fY;
+			poss.z = iterPosition.fZ;
+
+			fPos[0] = iterPosition.fX;
+			fPos[1] = iterPosition.fY;
+			fPos[2] = iterPosition.fZ;
+			
+			for (int cursor = 0; cursor < 13; cursor++)
+			{
+				CWeapon* wep = iterPed->GetWeapon((eWeaponSlot)cursor);
+				if ((wep->GetType() >= 16 && wep->GetType() <= 38 && wep->GetAmmoTotal() > 0) || wep->GetType() == eWeaponType::WEAPONTYPE_KNIFE)
+				{
+					sprintf_s(objName, "%d [%d]", (int)wep->GetType(), wep->GetAmmoTotal());
+
+					const struct weapon_entry* weapon;
+					for (weapon = weapon_list; weapon->name != NULL; weapon++)
+					{
+						if (weapon->id == wep->GetType())
+						{
+							sprintf_s(objName, "%s [%d]", weapon->name, wep->GetAmmoTotal());
+						}
+					}
+
+					if (strlen(objName) >= 2)
+					{
+						pCounts++;
+
+						CalcScreenCoors(&poss, &screenposs);
+
+						if (screenposs.z < 1.f)
+							continue;
+
+						screenPosition.fX = screenposs.x;
+						screenPosition.fY = screenposs.y;
+
+						float fDistanceFromWeapon = vect3_dist(fPos, playerPos);
+
+						if (fDistanceFromWeapon >= 1800.0)
+						{
+							pCounts--;
+							continue;
+						}
+
+						sprintf_s(distStr, " [%0.1fm]", fDistanceFromWeapon);
+						strcat(objName, distStr);
+
+						pD3DFont->PrintShadow(screenPosition.fX, screenPosition.fY - (pD3DFont_sampStuff->DrawHeight() - 1),
+							D3DCOLOR_RGBA(235, 171, 52, 128), objName);
+					}
+				}
+			}
+		}
+	}
 	if (set.weaponFinder)
 	{
-		CVector pSpinePos;
-		pPedSelf->GetBonePosition(BONE_HEAD, &pSpinePos);
-
-		int count = 0;
 		for (int id = 0; id < SAMP_MAX_OBJECTS; id++)
 		{
 			if (!g_SAMP->pPools->pObject->iIsListed[id]) continue;
 
-			D3DXVECTOR3 poss, screenposs;
-			CVector2D			screenPosition;
-			
-			float fPos[3], playerPos[3];
-
-			
 			vect3_copy(&g_SAMP->pPools->pObject->object[id]->pGTAEntity->base.matrix[4 * 3], fPos);
-			playerPos[0] = pSpinePos.fX;
-			playerPos[1] = pSpinePos.fY;
-			playerPos[2] = pSpinePos.fZ;
-
 
 			if (vect3_near_zero(fPos)) continue;
 
-			char objName[256];
 			sprintf_s(objName, "");
 
 			const struct weapon_entry* weapon;
@@ -5048,7 +5175,7 @@ void cheat_handle_weaponfinder()
 
 			if (strlen(objName) >= 2)
 			{
-				count++;
+				oCounts++;
 				poss.x = fPos[0];
 				poss.y = fPos[1];
 				poss.z = fPos[2];
@@ -5066,11 +5193,11 @@ void cheat_handle_weaponfinder()
 
 				if (fDistanceFromWeapon >= 1800.0)
 				{
-					count--;
+					oCounts--;
 					continue;
 				}
 
-				if (g_SAMP->pPools->pObject->object[id]->iModel == 336) count--; // Bat, don't add as count in weapons but still show.
+				if (g_SAMP->pPools->pObject->object[id]->iModel == 336) oCounts--; // Bat, don't add as count in weapons but still show.
 
 				char distStr[256];
 				sprintf_s(distStr, " [%0.1fm]", fDistanceFromWeapon);
@@ -5080,14 +5207,13 @@ void cheat_handle_weaponfinder()
 					D3DCOLOR_RGBA(61, 237, 237, 128), objName);
 			}
 		}
-		D3DXVECTOR3 poss, screenposs;
-		poss.x = CVecToD3DXVEC(pSpinePos).x;
-		poss.y = CVecToD3DXVEC(pSpinePos).y;
-		poss.z = CVecToD3DXVEC(pSpinePos).z;
+		poss.x = CVecToD3DXVEC(pHeadPos).x;
+		poss.y = CVecToD3DXVEC(pHeadPos).y;
+		poss.z = CVecToD3DXVEC(pHeadPos).z;
 		CalcScreenCoors(&poss, &screenposs);
 
 		char bufEx[256];
-		sprintf_s(bufEx, "%d Weapons", count);
+		sprintf_s(bufEx, "%d Weapons", oCounts);
 		pD3DFont_sampStuff->PrintShadow(screenposs.x, screenposs.y - (pD3DFont_sampStuff->DrawHeight() - 1),
 			D3DCOLOR_RGBA(255, 255, 0, 128), bufEx);
 	}

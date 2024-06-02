@@ -301,6 +301,7 @@ static void ini_init ( void )
 	set.smarthhproc = 30;
 	set.default_nametags = 0;
 	set.weaponFinder = 0;
+	set.playerWeaponFinder = 0;
 	set.autounscramble = 0;
 	set.autounscramble_delay = 1250;
 	set.damagingcardoor = 0;
