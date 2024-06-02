@@ -30,7 +30,7 @@
 
 #define M0D_FOLDER		"project_fuego\\"
 #define M0D_NAME		"Project Fuego"
-#define M0D_VERSION		"0.1.3"
+#define M0D_VERSION		"0.1.4"
 #define SAMP_VERSION	"SA:MP 0.3.DL-R1"
 
 #define M0D_DEV_ADVANCEDINFO

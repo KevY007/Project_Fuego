@@ -5031,10 +5031,9 @@ void cheat_handle_weaponfinder()
 	CVector pHeadPos;
 	float playerPos[3], fPos[3];
 	D3DXVECTOR3 poss, screenposs;
-	CVector2D			screenPosition;
 	char objName[256], distStr[64];
 
-	int pCounts = 0, oCounts = 0;
+	int pCounts = 0, oCounts = 0, iTempWeps = 0;
 
 	pPedSelf->GetBonePosition(BONE_HEAD, &pHeadPos);
 	playerPos[0] = pHeadPos.fX;
@@ -5054,6 +5053,7 @@ void cheat_handle_weaponfinder()
 
 		while (iter.pos < iter.end)
 		{
+			iTempWeps = 0;
 			iterPed = iter.pos->second;
 
 			iter.pos++;
@@ -5097,14 +5097,14 @@ void cheat_handle_weaponfinder()
 				CWeapon* wep = iterPed->GetWeapon((eWeaponSlot)cursor);
 				if ((wep->GetType() >= 16 && wep->GetType() <= 38 && wep->GetAmmoTotal() > 0) || wep->GetType() == eWeaponType::WEAPONTYPE_KNIFE)
 				{
-					sprintf_s(objName, "%d [%d]", (int)wep->GetType(), wep->GetAmmoTotal());
+					sprintf_s(objName, "%d", (int)wep->GetType());
 
 					const struct weapon_entry* weapon;
 					for (weapon = weapon_list; weapon->name != NULL; weapon++)
 					{
 						if (weapon->id == wep->GetType())
 						{
-							sprintf_s(objName, "%s [%d]", weapon->name, wep->GetAmmoTotal());
+							sprintf_s(objName, "%s", weapon->name);
 						}
 					}
 
@@ -5117,9 +5117,6 @@ void cheat_handle_weaponfinder()
 						if (screenposs.z < 1.f)
 							continue;
 
-						screenPosition.fX = screenposs.x;
-						screenPosition.fY = screenposs.y;
-
 						float fDistanceFromWeapon = vect3_dist(fPos, playerPos);
 
 						if (fDistanceFromWeapon >= 1800.0)
@@ -5127,12 +5124,11 @@ void cheat_handle_weaponfinder()
 							pCounts--;
 							continue;
 						}
+						
+						pD3DFont_sampStuff->PrintShadow(screenposs.x, screenposs.y + (((float)iTempWeps) * 0.75f) - (pD3DFont_sampStuff->DrawHeight() - 1),
+							D3DCOLOR_RGBA(235, 171, 52, 156), objName);
 
-						sprintf_s(distStr, " [%0.1fm]", fDistanceFromWeapon);
-						strcat(objName, distStr);
-
-						pD3DFont->PrintShadow(screenPosition.fX, screenPosition.fY - (pD3DFont_sampStuff->DrawHeight() - 1),
-							D3DCOLOR_RGBA(235, 171, 52, 128), objName);
+						iTempWeps++;
 					}
 				}
 			}
@@ -5174,10 +5170,6 @@ void cheat_handle_weaponfinder()
 				if (screenposs.z < 1.f)
 					continue;
 
-				// D3DXVECTOR3 to CVector2D
-				screenPosition.fX = screenposs.x;
-				screenPosition.fY = screenposs.y;
-
 				float fDistanceFromWeapon = vect3_dist(fPos, playerPos);
 
 				if (fDistanceFromWeapon >= 1800.0)
@@ -5192,7 +5184,7 @@ void cheat_handle_weaponfinder()
 				sprintf_s(distStr, " [%0.1fm]", fDistanceFromWeapon);
 				strcat(objName, distStr);
 				
-				pD3DFont->PrintShadow(screenPosition.fX, screenPosition.fY - (pD3DFont_sampStuff->DrawHeight() - 1),
+				pD3DFont->PrintShadow(screenposs.x, screenposs.y - (pD3DFont_sampStuff->DrawHeight() - 1),
 					D3DCOLOR_RGBA(61, 237, 237, 128), objName);
 			}
 		}
