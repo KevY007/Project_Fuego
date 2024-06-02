@@ -956,80 +956,16 @@ void renderPlayerTags ( void )
 	if ( gta_menu_active() )
 		return;
 
-
-	if (g_Players && GetTickCount() - set.tempnt_updateTick >= 250)
-	{
-		for (int i = 0; i < SAMP_MAX_PLAYERS; i++)
-		{
-			if (!ValidPlayer(i)) // checks for index out of range, not listed or being us (local playerid)
-				continue;
-			
-			if (g_Players->pRemotePlayer[i]->strPlayerName.size() < 3) continue;
-
-			if (g_Players->pRemotePlayer[i]->strPlayerName.substr(g_Players->pRemotePlayer[i]->strPlayerName.size() - 3) == "[M]")
-			{
-				if (!set.nametag_masked[i] || !set.default_nametags || !set.nametag_masksupport || !cheat_state->render_player_tags || 
-					!IsPlayerStreamed(i))
-				{
-					g_Players->pRemotePlayer[i]->strPlayerName.resize(g_Players->pRemotePlayer[i]->strPlayerName.size() - 3);
-					if (g_Players->pRemotePlayer[i]->pPlayerData != NULL && !set.nametag_masked[i]) g_Players->pRemotePlayer[i]->pPlayerData->iShowNameTag = 1;
-				}
-			}
-			else
-			{
-				if (set.default_nametags && set.nametag_masked[i] && cheat_state->render_player_tags)
-				{
-					if (set.nametag_masksupport) g_Players->pRemotePlayer[i]->strPlayerName.append("[M]");
-					if (g_Players->pRemotePlayer[i]->pPlayerData != NULL) g_Players->pRemotePlayer[i]->pPlayerData->iShowNameTag = 1;
-				}
-			}
-#ifdef SAMPADDON_SUPPORT
-			if (set.default_nametags && cheat_state->render_player_tags) // Hiding out of FOV nametags (due to some glitch it shows on backscreen z <1.f)
-			{
-				D3DXVECTOR3 poss, screenposs;
-
-				float fPos[3] = { 0.0f, 0.0f, 0.0f };
-
-				if (g_Players->pRemotePlayer[i]->pPlayerData != NULL && g_Players->pRemotePlayer[i]->pPlayerData->pSAMP_Actor != NULL)
-				{
-					vect3_copy(&g_Players->pRemotePlayer[i]->pPlayerData->pSAMP_Actor->pGTA_Ped->base.matrix[4 * 3], fPos);
-
-					poss.x = fPos[0];
-					poss.y = fPos[1];
-					poss.z = fPos[2];
-
-					CalcScreenCoors(&poss, &screenposs);
-				}
-
-				if (vect3_near_zero(fPos) || screenposs.z < 1.f)
-				{
-					if (g_Players->pRemotePlayer[i]->pPlayerData->iShowNameTag) g_Players->pRemotePlayer[i]->pPlayerData->iShowNameTag = 0;
-				}
-				else {
-					if (!g_Players->pRemotePlayer[i]->pPlayerData->iShowNameTag) g_Players->pRemotePlayer[i]->pPlayerData->iShowNameTag = 1;
-				}
-			}
-#endif
-		}
-
-		set.tempnt_updateTick = GetTickCount(); // hopefully reduco laggo
-	}
-
 	if (set.default_nametags && cheat_state->render_player_tags && !set.tempnt_toggled)
 	{
 		set.tempnt_dist = g_SAMP->pSettings->fNameTagsDistance;
 		set.tempnt_nt = g_SAMP->pSettings->byteShowNameTags;
 		set.tempnt_walls = g_SAMP->pSettings->byteNoNametagsBehindWalls;
 
-		g_SAMP->pSettings->fNameTagsDistance = 5000.0F;
+		g_SAMP->pSettings->fNameTagsDistance = 2000.0F;
 		g_SAMP->pSettings->byteShowNameTags = 1;
 		g_SAMP->pSettings->byteNoNametagsBehindWalls = 0;
 
-#ifdef SAMPADDON_SUPPORT
-		set.tempnt_thruWalls = *((short*)(g_dwSAMP_Addr + 0x74FA3));
-		*((short*)(g_dwSAMP_Addr + 0x74FA3)) = 5355; // scraped off NT03DL.cs from ugbase.eu, what this basically does is allow nametags to show through walls since our ones dont work		
-#endif
-		
 		set.tempnt_toggled = 1;
 	}
 
@@ -1039,27 +975,9 @@ void renderPlayerTags ( void )
 		g_SAMP->pSettings->byteShowNameTags = set.tempnt_nt;
 		g_SAMP->pSettings->byteNoNametagsBehindWalls = set.tempnt_walls;
 
-#ifdef SAMPADDON_SUPPORT
-		//*((short*)(g_dwSAMP_Addr + 0x74FA3)) = 9377;
-		*((short*)(g_dwSAMP_Addr + 0x74FA3)) = set.tempnt_thruWalls; // more cleaner ig
-#endif
-
-		for (int i = 0; i < SAMP_MAX_PLAYERS; i++)
-		{
-			if (!ValidPlayer(i)) continue;
-
-			if (!set.nametag_masked[i])
-			{
-				g_Players->pRemotePlayer[i]->pPlayerData->iShowNameTag = 1;
-			}
-			else
-			{
-				g_Players->pRemotePlayer[i]->pPlayerData->iShowNameTag = 0;
-			}
-	}
-
 		set.tempnt_toggled = 0;
 	}
+
 	// Exit this function and enable samp nametags, if panic key
 	if ( cheat_state->_generic.cheat_panic_enabled || !cheat_state->render_player_tags || set.default_nametags)
 	{
@@ -1507,7 +1425,7 @@ void renderPlayerTags ( void )
 
 			drawX += pD3DFont_sampStuff->DrawLength(buf);
 
-			if (set.nametag_masked[iSAMPID] && set.nametag_masksupport)
+			if (!g_Players->pRemotePlayer[iSAMPID]->pPlayerData->iShowNameTag)
 			{
 				pD3DFont_sampStuff->PrintShadow( drawX, drawY,
 					D3DCOLOR_XRGB(255, 0, 0), "  [M]");

@@ -300,8 +300,6 @@ static void ini_init ( void )
 	set.smarthealthhack = 0;
 	set.smarthhproc = 30;
 	set.default_nametags = 0;
-	set.nametag_masksupport = 1;
-	for (int i = 0; i < SAMP_MAX_PLAYERS; i++) set.nametag_masked[i] = 0;
 	set.weaponFinder = 0;
 	set.autounscramble = 0;
 	set.autounscramble_delay = 1250;
@@ -316,8 +314,6 @@ static void ini_init ( void )
 	set.tempnt_dist = 0.0F;
 	set.tempnt_nt = 0;
 	set.tempnt_walls = 0;
-	set.tempnt_thruWalls = 9377;
-	set.tempnt_updateTick = GetTickCount();
 	set.mmdef = "NaN";
 	set.wbdef = "NaN";
 	set.mbdef = "NaN";

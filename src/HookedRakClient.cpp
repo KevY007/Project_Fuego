@@ -53,7 +53,6 @@ Packet *HookedRakClientInterface::Receive(void)
 	{
 		if (OnReceivePacket(p))
 			break;
-
 		g_RakClient->GetInterface()->DeallocatePacket(p);
 		p = g_RakClient->GetInterface()->Receive();
 	}
