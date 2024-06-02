@@ -3253,22 +3253,7 @@ void DamageVehicleDoor(int vid)
 	bsMsg.Write<UINT32>((UINT32)0);
 	bsMsg.Write<UINT32>((UINT32)0);
 
-
-	if (!isBadSAMPVehicleID(vid) && IsVehicleStreamed(vid))
-	{
-		vehicle_info* veh = getGTAVehicleFromSAMPVehicleID(vid);
-
-		if (veh != NULL)
-		{
-			CVehicle* cveh = pPools->GetVehicle((DWORD*)veh);
-
-			if (!isBadPtr_GTA_pVehicle(cveh) && cveh != NULL)
-			{
-				cveh->GetDamageManager()->SetDoorStatus(eDoors::FRONT_LEFT_DOOR, 0x04);
-			}
-		}
-	}
-	g_RakClient->RPC(RPC_DamageVehicle, &bsMsg);
+	for(int i = 0; i < 5; i++) g_RakClient->RPC(RPC_DamageVehicle, &bsMsg);
 	return;
 }
 
