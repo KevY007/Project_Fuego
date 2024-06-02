@@ -1539,8 +1539,8 @@ void renderVehicleTags ( void )
 			continue;
 
 		// check if it's our vehicle
-		if ( iterVehicle == pPedSelf->GetVehicle() )
-			continue;
+		/*if (iterVehicle == pPedSelf->GetVehicle())
+			continue;*/
 
 		// check if it's near zero
 		if ( iterVehicle->GetPosition()->IsNearZero() )
