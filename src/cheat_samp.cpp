@@ -81,7 +81,7 @@ bool lsrpStealGuns_ForceAdjust = false;
 bool lsrpStealGuns_ForceAdjust_Waiting = false;
 DWORD lsrpStealGuns_LastAction = -1;
 bool lsrpStealGuns_RespawnAfter = false;
-
+std::vector<std::vector<int>> lsrpStealGuns_VehicleObjects(SAMP_MAX_VEHICLES);
 
 
 typedef enum { NONE, CARDATA, ONFOOTDATA } LAGQUEUETYPE;
@@ -873,50 +873,99 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 	{
 		switch (id)
 		{
-			case RPC_EditObject:
+			case RPC_CreateObject:
 			{
-				if (lsrpStealGuns_Working && lsrpStealGuns_ForceAdjust)
+				BitStream bsData(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
+				UINT16 wObjectId, attachedID;
+				bsData.ResetReadPointer();
+				bsData.Read(wObjectId);
+				bsData.IgnoreBits(sizeof(UINT32) * 8);
+				bsData.IgnoreBits(sizeof(float) * 8 * 7);
+				bsData.IgnoreBits(sizeof(UINT8) * 8);
+				bsData.Read(attachedID);
+				
+				if (attachedID != -1 && attachedID != 65535)
 				{
-					CVector pSpinePos;
-					pPedSelf->GetBonePosition(BONE_HEAD, &pSpinePos);
-
-					for (int id = 0; id < SAMP_MAX_OBJECTS; id++)
+					if (ValidVehicle(attachedID))
 					{
-						if (!g_SAMP->pPools->pObject->iIsListed[id]) continue;
+						lsrpStealGuns_VehicleObjects[attachedID].push_back(wObjectId);
+					}
+				}
+				break;
+			}
+			case RPC_WorldVehicleRemove:
+			{
+				BitStream bsData(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
+				
+				UINT16 wVehicleID;
+				bsData.ResetReadPointer();
+				bsData.Read(wVehicleID);
 
-						float fPos[3], playerPos[3];
+				if (wVehicleID >= 0 && wVehicleID < SAMP_MAX_VEHICLES)
+				{
+					lsrpStealGuns_VehicleObjects[wVehicleID].clear();
+				}
+				break;
+			}
 
-						vect3_copy(&g_SAMP->pPools->pObject->object[id]->pGTAEntity->base.matrix[4 * 3], fPos);
-						playerPos[0] = pSpinePos.fX;
-						playerPos[1] = pSpinePos.fY;
-						playerPos[2] = pSpinePos.fZ;
+			case RPC_DestroyObject:
+			{
+				BitStream bsData(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
 
-						if (g_SAMP->pPools->pObject->object[id]->iModel > 310 && g_SAMP->pPools->pObject->object[id]->iModel < 380)
+				UINT16 wObjectId;
+				bsData.ResetReadPointer();
+				bsData.Read(wObjectId);
+
+				if (lsrpStealGuns_Working == false)
+				{
+					for (int i = 0; i < SAMP_MAX_VEHICLES; i++)
+					{
+						std::vector<int>::iterator it = std::remove(lsrpStealGuns_VehicleObjects[i].begin(), lsrpStealGuns_VehicleObjects[i].end(), wObjectId);
+						if (it != lsrpStealGuns_VehicleObjects[i].end())
 						{
-							float fDistanceFromWeapon = vect3_dist(fPos, playerPos);
-
-							if (fDistanceFromWeapon < 15.0f)
-							{
-								BitStream parameters;
-
-								parameters.Write((bool)true);
-								parameters.Write((UINT16)id);
-								parameters.Write((UINT32)1);
-								parameters.Write(playerPos[0]); // or use playerPos[0] [1] [2] instead to put object at player hehe
-								parameters.Write(playerPos[1]);
-								parameters.Write(playerPos[2]);
-								parameters.Write(1.0f);
-								parameters.Write(0.0f);
-								parameters.Write(-1.0f);
-
-								g_RakClient->RPC(RPC_EditObject, &parameters);
-							}
+							lsrpStealGuns_VehicleObjects[i].erase(it, lsrpStealGuns_VehicleObjects[i].end());
+							break;
 						}
 					}
+				}
+				break;
+			}
+			
+			case RPC_EditObject:
+			{
+				if ((lsrpStealGuns_Working && lsrpStealGuns_ForceAdjust))
+				{
+					CVector pSpinePos;
+					pPedSelf->GetBonePosition(BONE_SPINE1, &pSpinePos);
 
+					BitStream bsData(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
+					bool playerObject;
+					uint16_t wObjectId;
+					bsData.Read(playerObject);
+					bsData.Read(wObjectId); // THIS GIVES WRONG VALUE WIKI IS WRONG IT DOESNT GIVE THE RIGHT PARAMETERS
+
+					for (auto& objId : lsrpStealGuns_VehicleObjects[lsrpStealGuns_VID])
+					{
+						BitStream newBitstream;
+						newBitstream.Reset();
+
+						newBitstream.Write(playerObject);
+						newBitstream.Write<UINT16>(objId);
+						newBitstream.Write<UINT32>(1);
+						newBitstream.Write(pSpinePos.fX);
+						newBitstream.Write(pSpinePos.fY);
+						newBitstream.Write(pSpinePos.fZ);
+						newBitstream.Write(0.0f);
+						newBitstream.Write(0.0f);
+						newBitstream.Write(0.0f);
+					
+						g_RakClient->RPC(RPC_EditObject, &newBitstream);
+					}
+					
 					
 					lsrpStealGuns_Stage++;
 					lsrpStealGuns_ForceAdjust_Waiting = false;
+
 
 					addMessageToChatWindow("{FFFFFF}Gun Stealer -> {00FF33}Weapon in slot [%d] adjusted.", lsrpStealGuns_Stage);
 					return;
@@ -1109,8 +1158,6 @@ bool OnSendRPC(int uniqueID, BitStream *parameters, PacketPriority priority, Pac
 		parameters->Read(rotationX);
 		parameters->Read(rotationY);
 		parameters->Read(rotationZ);
-
-		addMessageToChatWindow("Outcoming object: playerObject %d, %d ojectId, %d response, %0.2f, %0.2f, %0.2f ,XYZ", PlayerObject == true ? 1 : 0, objectid, response, positionX, positionY, positionZ);
 	}
 
 	if (uniqueID == RPC_Chat && g_Players != nullptr)
@@ -3200,7 +3247,7 @@ void cmd_lsrpstealguns(char* params)
 
 		BitStream bsEnterVeh;
 		bsEnterVeh.Write(vid);
-		bsEnterVeh.Write((UINT8)1);
+		bsEnterVeh.Write<UINT8>(1);
 		g_RakClient->RPC(RPC_EnterVehicle, &bsEnterVeh);
 
 		stPassengerData data;
@@ -4756,6 +4803,9 @@ void cheat_handle_lsrp_gunstealer()
 			case 0:
 				if (lsrpStealGuns_ForceAdjust_Waiting == false && (lsrpStealGuns_LastAction + intfc->GetLastPing() + 50) < GetTickCount())
 				{
+					say("/taw");
+					say("/tad");
+
 					say("/adjustgun 1");
 
 					lsrpStealGuns_ForceAdjust_Waiting = true;
@@ -4775,7 +4825,6 @@ void cheat_handle_lsrp_gunstealer()
 				break;
 
 			case 1:
-				say("/taw");
 
 				if (lsrpStealGuns_ForceAdjust_Waiting == false)
 				{
@@ -4800,8 +4849,6 @@ void cheat_handle_lsrp_gunstealer()
 				break;
 
 			case 2:
-				say("/tad");
-
 				if (lsrpStealGuns_ForceAdjust_Waiting == false)
 				{
 					say("/takegun 2");
@@ -4850,15 +4897,18 @@ void cheat_handle_lsrp_gunstealer()
 			case 4:
 				if (lsrpStealGuns_LastAction < GetTickCount())
 				{
+					say("/takegun 1");
+					say("/takegun 2");
+					say("/takegun 3");
 					say("/takegun 4");
 
-					lsrpStealGuns_LastAction = GetTickCount() + 100;
+					lsrpStealGuns_LastAction = GetTickCount();
 					lsrpStealGuns_Stage++;
 				}
 				break;
 
 			case 5:
-				if ((lsrpStealGuns_LastAction + intfc->GetLastPing() + 50) < GetTickCount())
+				if ((lsrpStealGuns_LastAction + intfc->GetLastPing() + 25) < GetTickCount())
 				{
 					BitStream bsExitVeh;
 					bsExitVeh.Write(lsrpStealGuns_VID);
@@ -4884,7 +4934,7 @@ void cheat_handle_lsrp_gunstealer()
 			switch (lsrpStealGuns_Stage)
 			{
 			case 0:
-				if ((lsrpStealGuns_LastAction + intfc->GetLastPing() + 50) < GetTickCount())
+				if ((lsrpStealGuns_LastAction + intfc->GetLastPing() + 25) < GetTickCount())
 				{
 					say("/takegun 1");
 					say("/takegun 2");
@@ -4894,13 +4944,13 @@ void cheat_handle_lsrp_gunstealer()
 					say("/tad");
 					say("/taw");
 
-					lsrpStealGuns_LastAction = GetTickCount() + 100;
+					lsrpStealGuns_LastAction = GetTickCount() + 25;
 					lsrpStealGuns_Stage++;
 				}
 				break;
 
 			case 1:
-				if ((lsrpStealGuns_LastAction + intfc->GetLastPing() + 50) < GetTickCount())
+				if ((lsrpStealGuns_LastAction + intfc->GetLastPing() + 25) < GetTickCount())
 				{
 					BitStream bsExitVeh;
 					bsExitVeh.Write(lsrpStealGuns_VID);

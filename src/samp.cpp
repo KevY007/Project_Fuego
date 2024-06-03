@@ -77,6 +77,9 @@ bool ValidPlayer(int PlayerID)
 
 bool ValidVehicle(int VehicleID)
 {
+	if (VehicleID < 0 || VehicleID > SAMP_MAX_VEHICLES)
+		return 0;
+
 	if (g_Vehicles->iIsListed[VehicleID] != 1)
 		return 0;
 
