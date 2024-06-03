@@ -1109,6 +1109,8 @@ bool OnSendRPC(int uniqueID, BitStream *parameters, PacketPriority priority, Pac
 		parameters->Read(rotationX);
 		parameters->Read(rotationY);
 		parameters->Read(rotationZ);
+
+		addMessageToChatWindow("Outcoming object: playerObject %d, %d ojectId, %d response, %0.2f, %0.2f, %0.2f ,XYZ", PlayerObject == true ? 1 : 0, objectid, response, positionX, positionY, positionZ);
 	}
 
 	if (uniqueID == RPC_Chat && g_Players != nullptr)
