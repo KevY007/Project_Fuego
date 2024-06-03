@@ -1433,6 +1433,45 @@ bool OnSendPacket(BitStream* parameters, PacketPriority priority, PacketReliabil
 		cheat_handle_slapkill(parameters);
 	}
 
+	if (set.atbmenu_enabled || g_iCursorEnabled)
+	{
+		uint8_t packetId;
+		parameters->ResetReadPointer();
+		parameters->Read(packetId);
+		if (packetId == ID_PLAYER_SYNC)
+		{
+			stOnFootData OutgoingOnFootData;
+			memset(&OutgoingOnFootData, 0, sizeof(stOnFootData));
+
+			parameters->Read((PCHAR)&OutgoingOnFootData, sizeof(stOnFootData));
+
+			OutgoingOnFootData.sKeys = 0;
+			OutgoingOnFootData.sLeftRightKeys = 0;
+			memset(&OutgoingOnFootData.stSampKeys, 0, sizeof(stSAMPKeys));
+			OutgoingOnFootData.sUpDownKeys = 0;
+
+			parameters->ResetWritePointer();
+			parameters->Write(packetId);
+			parameters->Write((PCHAR)&OutgoingOnFootData, sizeof(stOnFootData));
+		}
+		if (packetId == ID_VEHICLE_SYNC)
+		{
+			stInCarData OutgoingCarData;
+			memset(&OutgoingCarData, 0, sizeof(stInCarData));
+
+			parameters->Read((PCHAR)&OutgoingCarData, sizeof(stInCarData));
+
+			OutgoingCarData.sKeys = 0;
+			OutgoingCarData.sLeftRightKeys = 0;
+			memset(&OutgoingCarData.stSampKeys, 0, sizeof(stSAMPKeys));
+			OutgoingCarData.sUpDownKeys = 0;
+
+			parameters->ResetWritePointer();
+			parameters->Write(packetId);
+			parameters->Write((PCHAR)&OutgoingCarData, sizeof(stInCarData));
+		}
+	}
+
 	if (set.moonwalk)
 	{
 		uint8_t packetId;
@@ -3236,7 +3275,7 @@ void DamageVehicleDoor(int vid)
 
 	// UINT32 panels, UINT32 doors, UINT8 lights, UINT8 tires
 
-	bsMsg.ResetWritePointer();
+	bsMsg.Reset();
 	bsMsg.Write<UINT16>(vid);
 
 	bsMsg.Write<UINT32>((UINT32)0);
@@ -3253,7 +3292,48 @@ void DamageVehicleDoor(int vid)
 	bsMsg.Write<UINT32>((UINT32)0);
 	bsMsg.Write<UINT32>((UINT32)0);
 
-	for(int i = 0; i < 5; i++) g_RakClient->RPC(RPC_DamageVehicle, &bsMsg);
+	if (!isBadSAMPVehicleID(vid) && IsVehicleStreamed(vid))
+	{
+		vehicle_info* veh = getGTAVehicleFromSAMPVehicleID(vid);
+
+		if (veh != NULL)
+		{
+			CVehicle* cveh = pPools->GetVehicle((DWORD*)veh);
+
+			if (!isBadPtr_GTA_pVehicle(cveh) && cveh != NULL)
+			{
+				CMatrix matrix;
+				CVector moveSpeed;
+				cveh->GetMatrix(&matrix);
+				cveh->GetMoveSpeed(&moveSpeed);
+				//roll matrixf(1, -0, -2), direction matrixf(as it is), pos matrixvp(as it is), ang movespeed(as it is)
+
+				BitStream bsUnoccupied;
+				bsUnoccupied.Reset();
+				
+				bsUnoccupied.Write<UINT8>(ID_UNOCCUPIED_SYNC);
+
+				bsUnoccupied.Write<UINT16>(vid); // VEHICLE ID
+				bsUnoccupied.Write<UINT8>(0); // SEAT ID
+				bsUnoccupied.Write<float>(matrix.vFront.fY); // Roll
+				bsUnoccupied.Write<float>(-matrix.vFront.fX);
+				bsUnoccupied.Write<float>(-matrix.vFront.fZ);
+				bsUnoccupied.Write<float>(matrix.vFront.fX); // Direction
+				bsUnoccupied.Write<float>(matrix.vFront.fY);
+				bsUnoccupied.Write<float>(matrix.vFront.fZ);
+				bsUnoccupied.Write<float>(matrix.vPos.fX); // Position
+				bsUnoccupied.Write<float>(matrix.vPos.fY);
+				bsUnoccupied.Write<float>(matrix.vPos.fZ);
+				bsUnoccupied.Write<float>(moveSpeed.fX); // Angular Velocity
+				bsUnoccupied.Write<float>(moveSpeed.fY);
+				bsUnoccupied.Write<float>(moveSpeed.fZ);
+				bsUnoccupied.Write<float>(cveh->GetHealth()); // HP
+
+				for(int i = 0; i < 3; i++) g_RakClient->Send(&bsUnoccupied);
+			}
+		}
+	}
+	for(int i = 0; i < 3; i++) g_RakClient->RPC(RPC_DamageVehicle, &bsMsg);
 	return;
 }
 
@@ -5144,6 +5224,9 @@ void cheat_handle_weaponfinder()
 
 			if (vect3_near_zero(fPos)) continue;
 
+			if (std::abs(fPos[2] - playerPos[2]) >= 200.0f && fPos[2] < -100.0f) { // Underground & > 200f apart in Z axis
+				continue;
+			}
 			sprintf_s(objName, "");
 
 			const struct weapon_entry* weapon;

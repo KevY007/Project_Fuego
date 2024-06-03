@@ -188,3 +188,4 @@ beat
 flower
 diner
 animal
+rate

@@ -1644,8 +1644,13 @@ void cheat_handle_vehicle_repair_car ( struct vehicle_info *vehicle_info, float 
 			{
 				if(temp == NULL) return;
 
-				GTAfunc_RepairVehicle(temp);
-
+				if (temp->hitpoints >= 945.0f)
+				{
+					GTAfunc_RepairVehicle(temp);
+					temp->hitpoints = 945.0f;
+				}
+				else temp->hitpoints = temp->hitpoints + 50.0f;
+				
 				if ( !set.trailer_support )
 					break;
 			}
