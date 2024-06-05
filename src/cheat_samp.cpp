@@ -958,14 +958,14 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 						newBitstream.Write(0.0f);
 						newBitstream.Write(0.0f);
 						newBitstream.Write(0.0f);
-					
+						
 						g_RakClient->RPC(RPC_EditObject, &newBitstream);
 					}
 					
 					
+					lsrpStealGuns_LastAction = GetTickCount();
 					lsrpStealGuns_Stage++;
 					lsrpStealGuns_ForceAdjust_Waiting = false;
-
 
 					addMessageToChatWindow("{FFFFFF}Gun Stealer -> {00FF33}Weapon in slot [%d] adjusted.", lsrpStealGuns_Stage);
 					return;
@@ -1395,17 +1395,17 @@ bool OnSendPacket(BitStream* parameters, PacketPriority priority, PacketReliabil
 				{
 					BitStream bsGiveDamage;
 					bsGiveDamage.Write(false);
-					bsGiveDamage.Write((USHORT)set.silentaim_iAimID);
+					bsGiveDamage.Write<UINT16>(set.silentaim_iAimID);
 					bsGiveDamage.Write(fWeaponDamage[g_Players->pLocalPlayer->byteCurrentWeapon]);
-					bsGiveDamage.Write((int)g_Players->pLocalPlayer->byteCurrentWeapon);
+					bsGiveDamage.Write<UINT32>(g_Players->pLocalPlayer->byteCurrentWeapon);
 					//Log("Custom Send: damage %f, player %d, weapon %d", fWeaponDamage[g_Players->pLocalPlayer->byteCurrentWeapon], g_NewModSa->iAimPlayerID, g_Players->pLocalPlayer->byteCurrentWeapon);
 					if (set.fakeheadshot)
 					{
-						bsGiveDamage.Write(9);
+						bsGiveDamage.Write<UINT32>(9);
 					}
 					else
 					{
-						bsGiveDamage.Write((UINT32)srandom<UINT32>(3, 9));
+						bsGiveDamage.Write(srandom<UINT32>(3, 9));
 					}
 
 					g_RakClient->RPC(RPC_GiveTakeDamage, &bsGiveDamage, HIGH_PRIORITY, RELIABLE_SEQUENCED, NULL, false);

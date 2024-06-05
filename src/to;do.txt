@@ -1,2 +1,6 @@
 /.tpcollision - get infront of another player who'se car is running, in direction XY Infront (see samp version for tips? ) + a bit of speed magic
 broom, teleport there for your ping + his ping average should be good no?
+
+in sampu can force kill players by ninja jacking them through co driver (front passenger) seat and HOLDING LSHIFT
+so LSHIFT + ninja jack from passenger seat = kill player.
+maybe recreate and test to make a hack and see what keys are sent? stSampKeys .. onfoot or smth whatever however it happens..
