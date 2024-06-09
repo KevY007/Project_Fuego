@@ -4908,11 +4908,11 @@ void cheat_handle_lsrp_gunstealer()
 				break;
 
 			case 5:
-				if ((lsrpStealGuns_LastAction + intfc->GetLastPing() + 25) < GetTickCount())
+				if (GetTickCount() - (intfc->GetLastPing() + 50) > lsrpStealGuns_LastAction)
 				{
 					BitStream bsExitVeh;
 					bsExitVeh.Write(lsrpStealGuns_VID);
-					g_RakClient->RPC(RPC_ExitVehicle, &bsExitVeh);
+					//g_RakClient->RPC(RPC_ExitVehicle, &bsExitVeh);
 
 					lsrpStealGuns_Working = false;
 					lsrpStealGuns_ForceAdjust_Waiting = false;
@@ -4954,7 +4954,7 @@ void cheat_handle_lsrp_gunstealer()
 				{
 					BitStream bsExitVeh;
 					bsExitVeh.Write(lsrpStealGuns_VID);
-					g_RakClient->RPC(RPC_ExitVehicle, &bsExitVeh);
+					//g_RakClient->RPC(RPC_ExitVehicle, &bsExitVeh);
 
 					lsrpStealGuns_Working = false;
 					lsrpStealGuns_LastAction = GetTickCount();
