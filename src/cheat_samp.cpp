@@ -3503,7 +3503,7 @@ void cmd_gethere(char* params)
 		{
 			HookedRakClientInterface* intfc = (HookedRakClientInterface*)g_SAMP->pRakClientInterface;
 		
-			getHereRelease = GetTickCount() + (g_Players->pRemotePlayer[playerID]->iPing + intfc->GetLastPing() + 50);
+			getHereRelease = GetTickCount() + static_cast<int>(std::round(g_Players->pRemotePlayer[playerID]->iPing / 1.25f)) + intfc->GetLastPing() + 50;
 
 			int vid = getSAMPVehicleIDFromGTAVehicle(pVehicleEx);
 
@@ -3519,6 +3519,9 @@ void cmd_gethere(char* params)
 
 			if (pVehicle->GetModelIndex() == 406) // DUMPER:
 				data.fPosition[2] += 1.35;
+
+			if (pVehicle->GetModelIndex() == 732) // BERKLEY RC VAN:
+				data.fPosition[2] += 0.85;
 				
 			BitStream bsVehicleSync;
 			bsVehicleSync.Write((BYTE)ID_VEHICLE_SYNC);
