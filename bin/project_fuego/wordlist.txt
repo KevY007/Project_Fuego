@@ -190,3 +190,6 @@ flower
 diner
 animal
 rate
+bread
+beef
+sweat
