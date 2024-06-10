@@ -106,6 +106,8 @@ int getVehicleEmptySeat(vehicle_info* veh, bool passengerOnly)
 			break;
 		}
 	}
+
+	if (seat == 0) return -1;
 	return seat;
 }
 
