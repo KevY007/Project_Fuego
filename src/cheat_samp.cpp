@@ -3142,6 +3142,27 @@ void cmd_destroyallcars(char* params)
 	return;
 }
 
+void cmd_sethpar(char* params)
+{
+	if (params[0] == '\0')
+		return addMessageToChatWindow("USAGE: /.sethp <health> <optional: armour>");
+
+	int health;
+	int armour;
+	int ipc = sscanf(params, "%d %d", &health, &armour);
+	if (ipc < 1)
+	{
+		addMessageToChatWindow("USAGE: /.sethp <health> <optional: armour>");
+		return;
+	}
+
+	pPedSelf->SetHealth(health);
+
+	if (ipc >= 2) {
+		pPedSelf->SetArmor(armour);
+	}
+}
+
 void cmd_playervehicle(char* params)
 {
 	if (params[0] == '\0')
@@ -4072,6 +4093,7 @@ void initChatCmds(void)
 	addClientCommand(".destroyallcars", cmd_destroyallcars);
 	addClientCommand(".destroycar", cmd_destroycar);
 	addClientCommand("pveh", cmd_playervehicle);
+	addClientCommand(".sethp", cmd_sethpar);
 	addClientCommand("itroll", cmd_itroll);
 	addClientCommand(".takedmgrpc", cmd_takedmgrpc);
 	addClientCommand("forcecrash", cmd_forcecrash);
