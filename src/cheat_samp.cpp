@@ -4838,7 +4838,7 @@ void cheat_handle_lsrp_gunstealer()
 			case 2:
 			case 3:
 			{
-				if (lsrpStealGuns_ForceAdjust_Waiting == false && (lsrpStealGuns_LastAction + intfc->GetLastPing() + 50) < GetTickCount())
+				if (lsrpStealGuns_ForceAdjust_Waiting == false && (lsrpStealGuns_LastAction + intfc->GetLastPing()) < GetTickCount())
 				{
 					if (lsrpStealGuns_Stage == 0) {
 						std::string wepObjs = "{FFFFFF}Gun Stealer -> Weapon Object IDs: {FFFF00}";
@@ -4856,10 +4856,10 @@ void cheat_handle_lsrp_gunstealer()
 					say("/adjustgun %d", lsrpStealGuns_Stage + 1);
 
 					lsrpStealGuns_ForceAdjust_Waiting = true;
-					lsrpStealGuns_LastAction = GetTickCount() + 100; // Need dead-on timing so locking without any /CAREFUL/ unneeded delay.
+					lsrpStealGuns_LastAction = GetTickCount(); // Need dead-on timing so locking without any /CAREFUL/ unneeded delay.
 					// Stage goes automatically as weapon adjuster comes on.
 				}
-				else if (GetTickCount() - (intfc->GetLastPing() + 50) > lsrpStealGuns_LastAction && lsrpStealGuns_ForceAdjust_Waiting == true)
+				else if (GetTickCount() - (intfc->GetLastPing() + 100) > lsrpStealGuns_LastAction && lsrpStealGuns_ForceAdjust_Waiting == true)
 					// Weapon adjustion never came? wtf...
 				{
 					// must mean no gun to actually adjust so just move on...
