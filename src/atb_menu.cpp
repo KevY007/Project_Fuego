@@ -128,6 +128,7 @@ void Init_ATBMenu()
 	TwAddVarRW(miscFuncs, "Auto Unscrambler LSRP", TW_TYPE_BOOLCPP, &set.autounscramble, "true='On' false='Off'");
 
 	TwAddSeparator(miscFuncs, "HHSep", NULL);
+	TwAddVarRW(miscFuncs, "Health Hack", TW_TYPE_BOOLCPP, &cheat_state->_generic.hp_cheat, "true='On' false='Off'");
 	TwAddVarRW(miscFuncs, "Smart Health Hack (addon over normal hh)", TW_TYPE_BOOLCPP, &set.smarthealthhack, "true='On' false='Off'");
 	TwAddVarRW(miscFuncs, "Smart HH Proc Chance", TW_TYPE_UINT8, &set.smarthhproc, "min=0 max=100 step=5");
 
