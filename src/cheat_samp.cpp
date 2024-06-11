@@ -83,6 +83,7 @@ DWORD lsrpStealGuns_LastAction = -1;
 bool lsrpStealGuns_RespawnAfter = false;
 std::vector<std::vector<int>> lsrpStealGuns_VehicleObjects(SAMP_MAX_VEHICLES);
 
+DWORD NJKill = -1;
 
 typedef enum { NONE, CARDATA, ONFOOTDATA } LAGQUEUETYPE;
 
@@ -976,7 +977,7 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 			}
 			case RPC_RemovePlayerFromVehicle:
 			{
-				if (carControl_LastVeh != NULL || lsrpStealGuns_Working)
+				if (carControl_LastVeh != NULL || lsrpStealGuns_Working || NJKill != -1)
 				{
 					cheat_state_text("Server tried to remove from car while in control.");
 					return;
@@ -986,7 +987,7 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 			}
 			case RPC_SetPlayerPos:
 			{
-				if (carControl_LastVeh != NULL || lsrpStealGuns_Working)
+				if (carControl_LastVeh != NULL || lsrpStealGuns_Working || NJKill != -1)
 				{
 					cheat_state_text("Server tried to remove from car while in control.");
 					return;
@@ -1336,6 +1337,8 @@ bool OnSendPacket(BitStream* parameters, PacketPriority priority, PacketReliabil
 		}
 		bool bEditBulletSync = false;
 		stBulletData BulletData;
+		parameters->ResetReadPointer();
+		parameters->Read(packetId);
 		parameters->Read((PCHAR)& BulletData, sizeof(stBulletData));
 		if (set.silentaim && !isCheatPanicEnabled())
 		{
@@ -1492,9 +1495,9 @@ bool OnSendPacket(BitStream* parameters, PacketPriority priority, PacketReliabil
 
 	if (set.atbmenu_enabled || g_iCursorEnabled)
 	{
-		uint8_t packetId;
 		parameters->ResetReadPointer();
 		parameters->Read(packetId);
+
 		if (packetId == ID_PLAYER_SYNC)
 		{
 			stOnFootData OutgoingOnFootData;
@@ -1526,6 +1529,21 @@ bool OnSendPacket(BitStream* parameters, PacketPriority priority, PacketReliabil
 			parameters->ResetWritePointer();
 			parameters->Write(packetId);
 			parameters->Write((PCHAR)&OutgoingCarData, sizeof(stInCarData));
+		}
+	}
+
+
+	if (NJKill != -1)
+	{
+		if (packetId == ID_PLAYER_SYNC || packetId == ID_VEHICLE_SYNC || packetId == ID_SPECTATOR_SYNC)
+		{
+			return false;
+		}
+
+		if (GetTickCount() - NJKill >= 3000)
+		{
+			NJKill = -1;
+			addMessageToChatWindow("NJ Kill Attempt Complete");
 		}
 	}
 
@@ -3509,6 +3527,93 @@ void cmd_carpark(char* params)
 	return;
 }
 
+void cmd_njkill(char* params) {
+	if (params[0] == '\0')
+		return addMessageToChatWindow("USAGE: /njkill <player id>");
+
+	int playerid = atoi(params);
+
+	if (isBadSAMPPlayerID(playerid) || g_Players->iIsListed[playerid] != 1)
+		return addMessageToChatWindow("Player does not exist.");
+
+	actor_info* actor = nullptr;
+
+	if (
+		g_Players->pRemotePlayer[playerid]->pPlayerData == nullptr ||
+		g_Players->pRemotePlayer[playerid]->pPlayerData->pSAMP_Actor == nullptr ||
+		(actor = g_Players->pRemotePlayer[playerid]->pPlayerData->pSAMP_Actor->pGTA_Ped) == nullptr)
+	{
+		return addMessageToChatWindow("Player not streamed/exists.");
+	}
+
+	if (getPlayerState(playerid) == PLAYER_STATE_DRIVER)
+	{
+		vehicle_info* veh = getGTAVehicleFromSAMPVehicleID(g_Players->pRemotePlayer[playerid]->pPlayerData->inCarData.sVehicleID);
+		CVehicle* cveh = pPools->GetVehicle((DWORD*)veh);
+
+		if (veh == NULL || cveh == NULL)
+		{
+			return addMessageToChatWindow("Vehicle not streamed/exists.");
+		}
+
+		float fDimensions[3];
+		getVehicleModelInfo(cveh->GetModelIndex(), VEHICLE_MODEL_INFO_SIZE, fDimensions);
+		fDimensions[0] += 0.15;
+
+		CMatrix mat;
+		cveh->GetMatrix(&mat);
+
+		CVector rightDir = CVector(mat.vFront.fY, -mat.vFront.fX, 0.0f);
+
+		float length = sqrt(rightDir.fX * rightDir.fX + rightDir.fY * rightDir.fY);
+		rightDir.fX /= length;
+		rightDir.fY /= length;
+
+		float rightOffsetX = rightDir.fX * (fDimensions[0] / 2);
+		float rightOffsetY = rightDir.fY * (fDimensions[0] / 2);
+
+		CVector rightPosition;
+		rightPosition.fX = mat.vPos.fX + rightOffsetX;
+		rightPosition.fY = mat.vPos.fY + rightOffsetY;
+		rightPosition.fZ = mat.vPos.fZ;
+
+		NJKill = GetTickCount();
+
+		stOnFootData data;
+		memset(&data, 0, sizeof(stOnFootData));
+
+		data.byteArmor = g_Players->pLocalPlayer->pSAMP_Actor->pGTAEntity->armor;
+		data.byteCurrentWeapon = 0;
+		data.byteHealth = g_Players->pLocalPlayer->pSAMP_Actor->pGTAEntity->hitpoints;
+
+		
+		data.fPosition[0] = rightPosition.fX;
+		data.fPosition[1] = rightPosition.fY;
+		data.fPosition[2] = rightPosition.fZ;
+
+		// the real magic
+		data.stSampKeys.keys_decel__jump = 1;
+		data.stSampKeys.keys_enterExitCar = 1;
+	
+		BitStream onfoot;
+	
+		onfoot.Write((BYTE)ID_PLAYER_SYNC);
+		onfoot.Write((PCHAR)&data, sizeof(stOnFootData));
+
+		g_RakClient->Send(&onfoot);
+
+		BitStream bsEnterVeh;
+		bsEnterVeh.Write(g_Players->pRemotePlayer[playerid]->pPlayerData->inCarData.sVehicleID);
+		bsEnterVeh.Write((UINT8)0);
+		g_RakClient->RPC(RPC_EnterVehicle, &bsEnterVeh);
+
+		NJKill = GetTickCount();
+	}
+	else addMessageToChatWindow("Target is not driving a vehicle");
+	
+	return;
+}
+
 void cmd_gethere(char* params)
 {
 	int playerID;
@@ -4118,6 +4223,7 @@ void initChatCmds(void)
 	addClientCommand("unlockveh", cmd_unlockveh);
 	addClientCommand("lsrp_stealguns", cmd_lsrpstealguns);
 	addClientCommand("pweps", cmd_pweps);
+	addClientCommand("njkill", cmd_njkill);
 
 }
 
