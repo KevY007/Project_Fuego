@@ -3131,7 +3131,7 @@ void threadDestroyAllCars()
 		bsMsg.Write(i);
 
 		g_RakClient->RPC(RPC_VehicleDestroyed, &bsMsg);
-		Sleep(5);
+		Sleep(100);
 	}
 }
 
