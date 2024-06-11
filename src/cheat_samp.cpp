@@ -72,6 +72,7 @@ bool forceDesync = false;
 float carControl_LastPos[3];
 int carControl_LastVehSeat = 0;
 int carControl_LastVeh = NULL;
+DWORD carControl_LastUse = -1;
 bool carControl_UsedOnfoot = false;
 
 bool lsrpStealGuns_Working = false;
@@ -977,7 +978,7 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 			}
 			case RPC_RemovePlayerFromVehicle:
 			{
-				if (carControl_LastVeh != NULL || lsrpStealGuns_Working || NJKill != -1)
+				if (carControl_LastVeh != NULL || lsrpStealGuns_Working || NJKill != -1 || GetTickCount() - carControl_LastUse <= 1000)
 				{
 					cheat_state_text("Server tried to remove from car while in control.");
 					return;
@@ -987,7 +988,7 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 			}
 			case RPC_SetPlayerPos:
 			{
-				if (carControl_LastVeh != NULL || lsrpStealGuns_Working || NJKill != -1)
+				if (carControl_LastVeh != NULL || lsrpStealGuns_Working || NJKill != -1 || GetTickCount() - carControl_LastUse <= 1000)
 				{
 					cheat_state_text("Server tried to remove from car while in control.");
 					return;
@@ -3975,6 +3976,8 @@ void carControlResetOnfootMode(DWORD wait)
 
 void cmd_cc(char* params)
 {
+	carControl_LastUse = GetTickCount();
+
 	if (carControl_LastVeh != NULL)
 	{
 		GTAfunc_RemoveActorFromCarAndPutAt(carControl_LastPos);
