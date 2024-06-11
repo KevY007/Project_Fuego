@@ -886,7 +886,9 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 				
 				if (attachedID != -1 && attachedID != 65535)
 				{
-					if (ValidVehicle(attachedID))
+					if (std::find(lsrpStealGuns_VehicleObjects[attachedID].begin(),
+						lsrpStealGuns_VehicleObjects[attachedID].end(),
+						wObjectId) == lsrpStealGuns_VehicleObjects[attachedID].end())
 					{
 						lsrpStealGuns_VehicleObjects[attachedID].push_back(wObjectId);
 					}
@@ -963,7 +965,7 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 					}
 					
 					
-					lsrpStealGuns_LastAction = GetTickCount();
+					//lsrpStealGuns_LastAction = GetTickCount();
 					lsrpStealGuns_Stage++;
 					lsrpStealGuns_ForceAdjust_Waiting = false;
 
@@ -4804,133 +4806,58 @@ void cheat_handle_lsrp_gunstealer()
 			switch (lsrpStealGuns_Stage)
 			{
 			case 0:
+			case 1:
+			case 2:
+			case 3:
+			{
 				if (lsrpStealGuns_ForceAdjust_Waiting == false && (lsrpStealGuns_LastAction + intfc->GetLastPing() + 50) < GetTickCount())
 				{
-					say("/taw");
-					say("/tad");
+					if (lsrpStealGuns_Stage == 0) {
+						std::string wepObjs = "{FFFFFF}Gun Stealer -> Weapon Object IDs: {FFFF00}";
+						for (auto& objId : lsrpStealGuns_VehicleObjects[lsrpStealGuns_VID])
+						{
+							wepObjs.append(std::to_string(objId) + " ");
+						}
 
-					say("/adjustgun 1");
+						addMessageToChatWindow(wepObjs.c_str());
 
-					lsrpStealGuns_ForceAdjust_Waiting = true;
-					lsrpStealGuns_LastAction = GetTickCount(); // Need dead-on timing so locking without any /CAREFUL/ unneeded delay.
-					// Stage goes automatically as weapon adjuster comes on.
-				}
-				else if (GetTickCount() - (intfc->GetLastPing() + 50) > lsrpStealGuns_LastAction && lsrpStealGuns_ForceAdjust_Waiting == true) 
-					// Weapon adjustion never came? wtf...
-				{
-					// must mean no gun to actually adjust so just move on...
-					lsrpStealGuns_ForceAdjust_Waiting = false;
-					lsrpStealGuns_Stage++; // go to gun2
-					lsrpStealGuns_LastAction = GetTickCount();
-
-					addMessageToChatWindow("{FFFFFF}Gun Stealer -> {FF0000}Weapon 1 adjust timeout, moving to 2...");
-				}
-				break;
-
-			case 1:
-
-				if (lsrpStealGuns_ForceAdjust_Waiting == false)
-				{
-					say("/takegun 1");
-					say("/adjustgun 2");
-
-					lsrpStealGuns_ForceAdjust_Waiting = true;
-					lsrpStealGuns_LastAction = GetTickCount(); // Need dead-on timing so locking without any /CAREFUL/ unneeded delay.
-					// Stage goes automatically as weapon adjuster comes on.
-				}
-				else if (GetTickCount() - (intfc->GetLastPing() + 50) > lsrpStealGuns_LastAction && lsrpStealGuns_ForceAdjust_Waiting == true)
-					// Weapon adjustion never came? wtf...
-				{
-					say("/takegun 1");
-					// must mean no gun to actually adjust so just move on...
-					lsrpStealGuns_ForceAdjust_Waiting = false;
-					lsrpStealGuns_Stage++; // go to gun3
-					lsrpStealGuns_LastAction = GetTickCount();
-
-					addMessageToChatWindow("{FFFFFF}Gun Stealer -> {FF0000}Weapon 2 adjust timeout, moving to 3...");
-				}
-				break;
-
-			case 2:
-				if (lsrpStealGuns_ForceAdjust_Waiting == false)
-				{
-					say("/takegun 2");
-					say("/adjustgun 3");
-
-					lsrpStealGuns_ForceAdjust_Waiting = true;
-					lsrpStealGuns_LastAction = GetTickCount(); // Need dead-on timing so locking without any /CAREFUL/ unneeded delay.
-					// Stage goes automatically as weapon adjuster comes on.
-				}
-				else if (GetTickCount() - (intfc->GetLastPing() + 50) > lsrpStealGuns_LastAction && lsrpStealGuns_ForceAdjust_Waiting == true)
-					// Weapon adjustion never came? wtf...
-				{
-					say("/takegun 2");
-					// must mean no gun to actually adjust so just move on...
-					lsrpStealGuns_ForceAdjust_Waiting = false;
-					lsrpStealGuns_Stage++; // go to gun4
-					lsrpStealGuns_LastAction = GetTickCount();
-
-					addMessageToChatWindow("{FFFFFF}Gun Stealer -> {FF0000}Weapon 3 adjust timeout, moving to 4...");
-				}
-				break;
-
-			case 3:
-				if (lsrpStealGuns_ForceAdjust_Waiting == false)
-				{
-					say("/takegun 3");
-					say("/adjustgun 4");
-
-					lsrpStealGuns_ForceAdjust_Waiting = true;
-					lsrpStealGuns_LastAction = GetTickCount(); // Need dead-on timing so locking without any /CAREFUL/ unneeded delay.
-					// Stage goes automatically as weapon adjuster comes on.
-				}
-				else if (GetTickCount() - (intfc->GetLastPing() + 50) > lsrpStealGuns_LastAction && lsrpStealGuns_ForceAdjust_Waiting == true)
-					// Weapon adjustion never came? wtf...
-				{
-					say("/takegun 3");
-					// must mean no gun to actually adjust so just move on...
-					lsrpStealGuns_ForceAdjust_Waiting = false;
-					lsrpStealGuns_Stage++; // go to retrieval of guns
-					lsrpStealGuns_LastAction = GetTickCount();
-
-					addMessageToChatWindow("{FFFFFF}Gun Stealer -> {00CCFF}Weapon 4 adjust timeout, moving to retrieval of whatever is available...");
-				}
-				break;
-
-			case 4:
-				if (lsrpStealGuns_LastAction < GetTickCount())
-				{
-					say("/takegun 1");
-					say("/takegun 2");
-					say("/takegun 3");
-					say("/takegun 4");
-
-					lsrpStealGuns_LastAction = GetTickCount();
-					lsrpStealGuns_Stage++;
-				}
-				break;
-
-			case 5:
-				if (GetTickCount() - (intfc->GetLastPing() + 50) > lsrpStealGuns_LastAction)
-				{
-					BitStream bsExitVeh;
-					bsExitVeh.Write(lsrpStealGuns_VID);
-					//g_RakClient->RPC(RPC_ExitVehicle, &bsExitVeh);
-
-					lsrpStealGuns_Working = false;
-					lsrpStealGuns_ForceAdjust_Waiting = false;
-					lsrpStealGuns_ForceAdjust = false;
-					lsrpStealGuns_LastAction = GetTickCount();
-
-					addMessageToChatWindow("{FFFFFF}Gun Stealer -> {00FF33}Steal attempt completed with force adjust.");
-					addMessageToChatWindow("{FFFFFF}Gun Stealer -> {FFFF00}If you failed because 'not close enough', use cmd without parameters for help.");
-
-					if (lsrpStealGuns_RespawnAfter) {
-						pPedSelf->SetHealth(0.0);
-						g_RakClient->SendSpawn();
+						say("/taw");
+						say("/tad");
 					}
+
+					say("/adjustgun %d", lsrpStealGuns_Stage + 1);
+
+					lsrpStealGuns_ForceAdjust_Waiting = true;
+					lsrpStealGuns_LastAction = GetTickCount() + 100; // Need dead-on timing so locking without any /CAREFUL/ unneeded delay.
+					// Stage goes automatically as weapon adjuster comes on.
+				}
+				else if (GetTickCount() - (intfc->GetLastPing() + 50) > lsrpStealGuns_LastAction && lsrpStealGuns_ForceAdjust_Waiting == true)
+					// Weapon adjustion never came? wtf...
+				{
+					// must mean no gun to actually adjust so just move on...
+					lsrpStealGuns_ForceAdjust_Waiting = false;
+					lsrpStealGuns_Stage++; // go to next gun
+					lsrpStealGuns_LastAction = GetTickCount();
+
+					addMessageToChatWindow("{FFFFFF}Gun Stealer -> {FF0000}Weapon %d adjust timeout, moving to next...", lsrpStealGuns_Stage);
 				}
 				break;
+			}
+			case 4:
+			{
+				say("/takegun 1");
+				say("/takegun 2");
+				say("/takegun 3");
+				say("/takegun 4");
+
+				lsrpStealGuns_LastAction = GetTickCount() + 25;
+				lsrpStealGuns_ForceAdjust_Waiting = false;
+				lsrpStealGuns_ForceAdjust = false;
+				lsrpStealGuns_Stage = 1;
+
+				addMessageToChatWindow("{FFFFFF}Gun Stealer -> {00FF33}Force adjust takegun attempt...");
+				break;
+			}
 			}
 		}
 		else {
