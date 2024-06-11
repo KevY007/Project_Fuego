@@ -978,7 +978,7 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 			}
 			case RPC_RemovePlayerFromVehicle:
 			{
-				if (carControl_LastVeh != NULL || lsrpStealGuns_Working || NJKill != -1 || GetTickCount() - carControl_LastUse <= 1000)
+				if (carControl_LastVeh != NULL || lsrpStealGuns_Working || NJKill != -1 || carControl_LastUse >= GetTickCount())
 				{
 					cheat_state_text("Server tried to remove from car while in control.");
 					return;
@@ -988,7 +988,7 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 			}
 			case RPC_SetPlayerPos:
 			{
-				if (carControl_LastVeh != NULL || lsrpStealGuns_Working || NJKill != -1 || GetTickCount() - carControl_LastUse <= 1000)
+				if (carControl_LastVeh != NULL || lsrpStealGuns_Working || NJKill != -1 || carControl_LastUse >= GetTickCount())
 				{
 					cheat_state_text("Server tried to remove from car while in control.");
 					return;
@@ -3976,7 +3976,7 @@ void carControlResetOnfootMode(DWORD wait)
 
 void cmd_cc(char* params)
 {
-	carControl_LastUse = GetTickCount();
+	carControl_LastUse = GetTickCount() + 1000;
 
 	if (carControl_LastVeh != NULL)
 	{
