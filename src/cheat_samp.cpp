@@ -937,8 +937,8 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 			{
 				if ((lsrpStealGuns_Working && lsrpStealGuns_ForceAdjust))
 				{
-					CVector pSpinePos;
-					pPedSelf->GetBonePosition(BONE_SPINE1, &pSpinePos);
+					CVector targetPos;
+					pPedSelf->GetBonePosition(BONE_LEFTKNEE, &targetPos);
 
 					BitStream bsData(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
 					bool playerObject;
@@ -954,9 +954,9 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 						newBitstream.Write(playerObject);
 						newBitstream.Write<UINT16>(objId);
 						newBitstream.Write<UINT32>(1);
-						newBitstream.Write(pSpinePos.fX);
-						newBitstream.Write(pSpinePos.fY);
-						newBitstream.Write(pSpinePos.fZ);
+						newBitstream.Write(targetPos.fX);
+						newBitstream.Write(targetPos.fY);
+						newBitstream.Write(targetPos.fZ);
 						newBitstream.Write(0.0f);
 						newBitstream.Write(0.0f);
 						newBitstream.Write(0.0f);
@@ -1160,6 +1160,12 @@ bool OnSendRPC(int uniqueID, BitStream *parameters, PacketPriority priority, Pac
 		parameters->Read(rotationX);
 		parameters->Read(rotationY);
 		parameters->Read(rotationZ);
+		/*
+		CVector pPelvis;
+		pPedSelf->GetBonePosition(BONE_LEFTKNEE, &pPelvis);
+
+		addMessageToChatWindow("Outcoming object: playerObject %d, %d ojectId, %d response, %0.2f, %0.2f, %0.2f ,XYZ", PlayerObject == true ? 1 : 0, objectid, response, positionX, positionY, positionZ);
+		addMessageToChatWindow("Bone: %0.2f, %0.2f, %0.2f ,XYZ", pPelvis.fX, pPelvis.fY, pPelvis.fZ);*/
 	}
 
 	if (uniqueID == RPC_Chat && g_Players != nullptr)
