@@ -978,7 +978,7 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 			}
 			case RPC_RemovePlayerFromVehicle:
 			{
-				if (carControl_LastVeh != NULL || lsrpStealGuns_Working || NJKill != -1 || carControl_LastUse >= GetTickCount())
+				if (carControl_LastVeh != NULL || lsrpStealGuns_Working || NJKill >= GetTickCount() || carControl_LastUse >= GetTickCount())
 				{
 					cheat_state_text("Server tried to remove from car while in control.");
 					return;
@@ -988,7 +988,7 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 			}
 			case RPC_SetPlayerPos:
 			{
-				if (carControl_LastVeh != NULL || lsrpStealGuns_Working || NJKill != -1 || carControl_LastUse >= GetTickCount())
+				if (carControl_LastVeh != NULL || lsrpStealGuns_Working || NJKill >= GetTickCount() || carControl_LastUse >= GetTickCount())
 				{
 					cheat_state_text("Server tried to remove from car while in control.");
 					return;
@@ -1534,17 +1534,11 @@ bool OnSendPacket(BitStream* parameters, PacketPriority priority, PacketReliabil
 	}
 
 
-	if (NJKill != -1)
+	if (NJKill >= GetTickCount())
 	{
 		if (packetId == ID_PLAYER_SYNC || packetId == ID_VEHICLE_SYNC || packetId == ID_SPECTATOR_SYNC)
 		{
 			return false;
-		}
-
-		if (GetTickCount() - NJKill >= 3000)
-		{
-			NJKill = -1;
-			addMessageToChatWindow("NJ Kill Attempt Complete");
 		}
 	}
 
@@ -3578,7 +3572,9 @@ void cmd_njkill(char* params) {
 		rightPosition.fY = mat.vPos.fY + rightOffsetY;
 		rightPosition.fZ = mat.vPos.fZ;
 
-		NJKill = GetTickCount();
+		NJKill = GetTickCount() + 3000;
+
+		addMessageToChatWindow("{FFFFFF}-> Trying to ninja-kill... {FFFF00}(3s required)");
 
 		stOnFootData data;
 		memset(&data, 0, sizeof(stOnFootData));
@@ -3586,6 +3582,7 @@ void cmd_njkill(char* params) {
 		data.byteArmor = g_Players->pLocalPlayer->pSAMP_Actor->pGTAEntity->armor;
 		data.byteCurrentWeapon = 0;
 		data.byteHealth = g_Players->pLocalPlayer->pSAMP_Actor->pGTAEntity->hitpoints;
+		g_Players->pLocalPlayer->pSAMP_Actor->drunkLevel = 0;
 
 		
 		data.fPosition[0] = rightPosition.fX;
