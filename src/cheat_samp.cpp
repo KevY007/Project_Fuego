@@ -72,7 +72,7 @@ bool forceDesync = false;
 float carControl_LastPos[3];
 int carControl_LastVehSeat = 0;
 int carControl_LastVeh = NULL;
-DWORD carControl_LastUse = -1;
+DWORD carControl_LastUse = GetTickCount();
 bool carControl_UsedOnfoot = false;
 
 bool lsrpStealGuns_Working = false;
@@ -84,7 +84,7 @@ DWORD lsrpStealGuns_LastAction = -1;
 bool lsrpStealGuns_RespawnAfter = false;
 std::vector<std::vector<int>> lsrpStealGuns_VehicleObjects(SAMP_MAX_VEHICLES);
 
-DWORD NJKill = -1;
+DWORD NJKill = GetTickCount();
 
 typedef enum { NONE, CARDATA, ONFOOTDATA } LAGQUEUETYPE;
 
