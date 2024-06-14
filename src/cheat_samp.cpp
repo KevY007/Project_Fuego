@@ -1154,6 +1154,41 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 					CVector targetPos;
 					pPedSelf->GetBonePosition(BONE_LEFTKNEE, &targetPos);
 
+					vehicle_info* veh = getGTAVehicleFromSAMPVehicleID(lsrpStealGuns_VID);
+
+					if (!isBadSAMPVehicleID(lsrpStealGuns_VID) && IsVehicleStreamed(lsrpStealGuns_VID) && veh != NULL &&
+						!isBadPtr_GTA_pVehicle(pPools->GetVehicle((DWORD*)veh)) && pPools->GetVehicle((DWORD*)veh) != NULL)
+					{
+						CVehicle* cveh = pPools->GetVehicle((DWORD*)veh);
+
+						if (veh->passengers[1] != NULL)
+						{
+							CPed* cped = cveh->GetPassenger(1);
+							Log("Using passenger 1 LEFTKNEE pos");
+							if (cped == NULL)
+							{
+								cped = cveh->GetPassenger(0);
+								Log("Nvm using passenger 0 LEFTKNEE pos");
+							}
+
+							cped->GetBonePosition(BONE_LEFTKNEE, &targetPos);
+						}
+						else if (veh->passengers[0] != NULL) {
+							CPed* cped = cveh->GetDriver();
+							Log("Using passenger 0 LEFTKNEE pos");
+
+							cped->GetBonePosition(BONE_LEFTKNEE, &targetPos);
+						}
+						else
+						{
+							Log("Using VPOS");
+							targetPos.fX = cveh->GetPosition()->fX;
+							targetPos.fY = cveh->GetPosition()->fY;
+							targetPos.fZ = cveh->GetPosition()->fZ + 0.025;
+						}
+					}
+					else Log("Using player ped pos lol");
+
 					BitStream bsData(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
 					bool playerObject;
 					uint16_t wObjectId;
