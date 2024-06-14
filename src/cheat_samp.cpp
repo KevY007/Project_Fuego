@@ -88,6 +88,9 @@ DWORD NJKill = GetTickCount();
 
 typedef enum { NONE, CARDATA, ONFOOTDATA } LAGQUEUETYPE;
 
+_ClientJoinInfo ClientJoinInfo;
+
+
 struct LagQueueData
 {
 	LAGQUEUETYPE type = NONE;
@@ -875,6 +878,215 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 	{
 		switch (id)
 		{
+			// COMPAT STUFF
+			case RPC_SetPlayerSkin:
+			{
+				if (ClientJoinInfo.ForceCompat != VER_03DLR1)
+				{
+					BitStream bs(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
+
+					uint32_t wPlayerID, dSkinID;
+					bs.Read(wPlayerID);
+					bs.Read(dSkinID);
+
+					bs.Reset();
+
+					bs.Write((short)wPlayerID);
+					bs.Write(dSkinID);
+					bs.Write((uint32_t)0);
+				}
+				break;
+			}
+			case RPC_WorldPlayerAdd:
+			{
+				if (ClientJoinInfo.ForceCompat != VER_03DLR1)
+				{
+					BitStream bs(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
+
+					uint16_t wPlayerID;
+					uint8_t team;
+					uint32_t dSkinID;
+					float PosX,
+						PosY,
+						PosZ,
+						facing_angle;
+					uint32_t player_color;
+					uint8_t fighting_style;
+
+					bs.Read(wPlayerID);
+					bs.Read(team);
+					bs.Read(dSkinID);
+					bs.Read(PosX);
+					bs.Read(PosY);
+					bs.Read(PosZ);
+					bs.Read(facing_angle);
+					bs.Read(player_color);
+					bs.Read(fighting_style);
+
+					bs.Reset();
+
+					bs.Write(wPlayerID);
+					bs.Write(team);
+					bs.Write(dSkinID);
+					bs.Write((uint32_t)0); // Custom skin (although unused)
+					bs.Write(PosX);
+					bs.Write(PosY);
+					bs.Write(PosZ);
+					bs.Write(facing_angle);
+					bs.Write(player_color);
+					bs.Write(fighting_style);
+				}
+				break;
+			}
+			case RPC_ShowActor:
+			{
+				if (ClientJoinInfo.ForceCompat != VER_03DLR1)
+				{
+					BitStream bs(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
+					
+					uint16_t wActorID;
+					uint32_t SkinID;
+					float X,
+						Y,
+						Z,
+						Angle,
+						health;
+					uint8_t bInvulnerable;
+
+					bs.Read(wActorID);
+					bs.Read(SkinID);
+					bs.Read(X);
+					bs.Read(Y);
+					bs.Read(Z);
+					bs.Read(Angle);
+					bs.Read(health);
+					bs.Read(bInvulnerable);
+
+					bs.Reset();
+
+					bs.Write(wActorID);
+					bs.Write(SkinID);
+					bs.Write((uint32_t)0); // Custom actor skin
+					bs.Write(X);
+					bs.Write(Y);
+					bs.Write(Z);
+					bs.Write(Angle);
+					bs.Write(health);
+					bs.Write(bInvulnerable);
+				}
+				break;
+			}
+			case RPC_RequestClass:
+			{
+				if (ClientJoinInfo.ForceCompat != VER_03DLR1)
+				{
+					BitStream bs(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
+
+					uint8_t byteRequestOutcome,
+						byteTeam;
+					int32_t iSkin;
+					uint8_t unk;
+					float vecPosX,
+						vecPosY,
+						vecPosZ,
+						fRotation;
+					int32_t iSpawnWeapons0,
+						iSpawnWeapons1,
+						iSpawnWeapons2,
+						iSpawnWeaponsAmmo0,
+						iSpawnWeaponsAmmo1,
+						iSpawnWeaponsAmmo2;
+
+					bs.Read(byteRequestOutcome);
+					bs.Read(byteTeam);
+					bs.Read(iSkin);
+					bs.Read(unk);
+					bs.Read(vecPosX);
+					bs.Read(vecPosY);
+					bs.Read(vecPosZ);
+					bs.Read(fRotation);
+					bs.Read(iSpawnWeapons0);
+					bs.Read(iSpawnWeapons1);
+					bs.Read(iSpawnWeapons2);
+					bs.Read(iSpawnWeaponsAmmo0);
+					bs.Read(iSpawnWeaponsAmmo1);
+					bs.Read(iSpawnWeaponsAmmo2);
+
+					bs.Reset();
+
+					bs.Write(byteRequestOutcome);
+					bs.Write(byteTeam);
+					bs.Write(iSkin);
+					bs.Write((uint32_t)0); // Custom actor skin (unused)
+					bs.Write(unk);
+					bs.Write(vecPosX);
+					bs.Write(vecPosY);
+					bs.Write(vecPosZ);
+					bs.Write(fRotation);
+					bs.Write(iSpawnWeapons0);
+					bs.Write(iSpawnWeapons1);
+					bs.Write(iSpawnWeapons2);
+					bs.Write(iSpawnWeaponsAmmo0);
+					bs.Write(iSpawnWeaponsAmmo1);
+					bs.Write(iSpawnWeaponsAmmo2);
+				}
+				break;
+			}
+			case RPC_SetSpawnInfo:
+			{
+				if (ClientJoinInfo.ForceCompat != VER_03DLR1)
+				{
+					BitStream bs(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
+
+					uint8_t byteTeam;
+					int32_t iSkin;
+					uint8_t unk;
+					float vecPosX,
+						vecPosY,
+						vecPosZ,
+						fRotation;
+					int32_t iSpawnWeapons0,
+						iSpawnWeapons1,
+						iSpawnWeapons2,
+						iSpawnWeaponsAmmo0,
+						iSpawnWeaponsAmmo1,
+						iSpawnWeaponsAmmo2;
+
+					bs.Read(byteTeam);
+					bs.Read(iSkin);
+					bs.Read(unk);
+					bs.Read(vecPosX);
+					bs.Read(vecPosY);
+					bs.Read(vecPosZ);
+					bs.Read(fRotation);
+					bs.Read(iSpawnWeapons0);
+					bs.Read(iSpawnWeapons1);
+					bs.Read(iSpawnWeapons2);
+					bs.Read(iSpawnWeaponsAmmo0);
+					bs.Read(iSpawnWeaponsAmmo1);
+					bs.Read(iSpawnWeaponsAmmo2);
+
+					bs.Reset();
+
+					bs.Write(byteTeam);
+					bs.Write(iSkin);
+					bs.Write((uint32_t)0); // Custom actor skin (unused)
+					bs.Write(unk);
+					bs.Write(vecPosX);
+					bs.Write(vecPosY);
+					bs.Write(vecPosZ);
+					bs.Write(fRotation);
+					bs.Write(iSpawnWeapons0);
+					bs.Write(iSpawnWeapons1);
+					bs.Write(iSpawnWeapons2);
+					bs.Write(iSpawnWeaponsAmmo0);
+					bs.Write(iSpawnWeaponsAmmo1);
+					bs.Write(iSpawnWeaponsAmmo2);
+				}
+				break;
+			}
+			// END COMPAT STUFF
+
 			case RPC_CreateObject:
 			{
 				BitStream bsData(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
@@ -971,7 +1183,7 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 					lsrpStealGuns_Stage++;
 					lsrpStealGuns_ForceAdjust_Waiting = false;
 
-					addMessageToChatWindow("{FFFFFF}Gun Stealer -> {00FF33}Weapon in slot [%d] adjusted.", lsrpStealGuns_Stage);
+					addMessageToChatWindow("Gun Stealer -> {00FF33}Weapon in slot [%d] adjusted.", lsrpStealGuns_Stage);
 					return;
 				}
 				break;
@@ -1141,12 +1353,60 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 	callback(rpcParams);
 }
 
+void SendClientJoin(unsigned int dwDelay = 3000)
+{
+	Sleep(dwDelay);
+
+	BitStream parameters;
+
+	UINT32 modifiedResponse = ClientJoinInfo.uiClientChallengeResponse ^ 4062 ^ ClientJoinInfo.ForceCompat;
+
+	parameters.Reset();
+	parameters.Write(ClientJoinInfo.ForceCompat);
+	parameters.Write(ClientJoinInfo.byteMod);
+	parameters.Write(ClientJoinInfo.byteNicknameLen);
+	parameters.Write(ClientJoinInfo.NickName, ClientJoinInfo.byteNicknameLen);
+	parameters.Write(modifiedResponse);
+	parameters.Write(ClientJoinInfo.byteAuthKeyLen);
+	parameters.Write(ClientJoinInfo.auth_key, ClientJoinInfo.byteAuthKeyLen);
+	parameters.Write<UINT8>(strlen(ClientJoinInfo.ForceCompatStr));
+	parameters.Write(ClientJoinInfo.ForceCompatStr, strlen(ClientJoinInfo.ForceCompatStr));
+
+	parameters.Write(modifiedResponse);
+
+	addMessageToChatWindow("{FF0000}[VERSION-COMPAT] {FFFFFF}Connecting as {FF0000}%s{FFFFFF}.", ClientJoinInfo.ForceCompatStr);
+
+	g_RakClient->RPC(RPC_ClientJoin, &parameters);
+	return;
+}
+
 bool OnSendRPC(int uniqueID, BitStream *parameters, PacketPriority priority, PacketReliability reliability, char orderingChannel, bool shiftTimestamp)
 {
 	if (!isCheatPanicEnabled())
 	{
 		if (set.netPatchAssoc[uniqueID][OUTCOMING_RPC] != nullptr && set.netPatchAssoc[uniqueID][OUTCOMING_RPC]->enabled)
 			return false;
+	}
+
+	if (uniqueID == RPC_ClientJoin)
+	{
+		parameters->Read(ClientJoinInfo.iVersion);
+		parameters->Read(ClientJoinInfo.byteMod);
+		parameters->Read(ClientJoinInfo.byteNicknameLen);
+		parameters->Read(ClientJoinInfo.NickName, ClientJoinInfo.byteNicknameLen);
+		ClientJoinInfo.NickName[ClientJoinInfo.byteNicknameLen] = '\0';
+		parameters->Read(ClientJoinInfo.uiClientChallengeResponse);
+		parameters->Read(ClientJoinInfo.byteAuthKeyLen);
+		parameters->Read(ClientJoinInfo.auth_key, ClientJoinInfo.byteAuthKeyLen);
+		ClientJoinInfo.auth_key[ClientJoinInfo.byteAuthKeyLen] = '\0';
+		parameters->Read(ClientJoinInfo.iClientVerLen);
+		parameters->Read(ClientJoinInfo.ClientVersion, ClientJoinInfo.iClientVerLen);
+		ClientJoinInfo.ClientVersion[ClientJoinInfo.iClientVerLen] = '\0';
+
+		addMessageToChatWindow("{FF0000}[VERSION-COMPAT] {FFFFFF}If you wish to join as {FF0000}0.3.7-R2{FFFFFF}, use {FF0000}/compat {FFFFFF}within 3s...");
+
+		std::thread(SendClientJoin, 3000).detach();
+		return false;
 	}
 
 	if (uniqueID == RPC_EditObject)
@@ -1291,6 +1551,7 @@ bool OnSendPacket(BitStream* parameters, PacketPriority priority, PacketReliabil
 		if (set.netPatchAssoc[packetId][OUTCOMING_PACKET] != nullptr && set.netPatchAssoc[packetId][OUTCOMING_PACKET]->enabled)
 			return false;
 	}
+
 	if (set.fakesynclag && set.fakesynclag_onceperms)
 	{
 		static DWORD SyncTick = GetTickCount();
@@ -2269,7 +2530,7 @@ void cmd_change_server(char *param)	// 127.0.0.1 7777 Username Password
 	int ipc = sscanf(param, "%s%s%s%s", IP, Port, Nick, Password);
 	if (ipc < 2)
 	{
-		addMessageToChatWindow("USAGE: /change_server <ip> <port> <Username> <Server Password>");
+		addMessageToChatWindow("{FFFF00}USAGE: /change_server <ip> <port> <Username> <Server Password>");
 		addMessageToChatWindow("Variables that are set to \"NULL\" (capitalized) will be ignored.");
 		addMessageToChatWindow("If you set the Password to \"NULL\" it is set to <no server password>.");
 		addMessageToChatWindow("Username and password can also be left out completely.");
@@ -2360,7 +2621,7 @@ void cmd_tele_loc(char *param)
 {
 	if (strlen(param) == 0)
 	{
-		addMessageToChatWindow("USAGE: /tele_loc <location name>");
+		addMessageToChatWindow("{FFFF00}USAGE: /tele_loc <location name>");
 		addMessageToChatWindow("Use /tele_locations to show the location names.");
 		addMessageToChatWindow("The more specific you are on location name the better the result.");
 		return;
@@ -2379,7 +2640,7 @@ void cmd_tele_loc(char *param)
 		return;
 	}
 
-	addMessageToChatWindow("USAGE: /tele_loc <location name>");
+	addMessageToChatWindow("{FFFF00}USAGE: /tele_loc <location name>");
 	addMessageToChatWindow("Use /tele_locations to show the location names.");
 	addMessageToChatWindow("The more specific you are on location name the better the result.");
 }
@@ -2400,7 +2661,7 @@ void cmd_pickupid(char *params)
 {
 	if (!strlen(params))
 	{
-		addMessageToChatWindow("USAGE: /pickupid <pickup id>");
+		addMessageToChatWindow("{FFFF00}USAGE: /pickupid <pickup id>");
 		return;
 	}
 
@@ -2411,7 +2672,7 @@ void cmd_setclass(char *params)
 {
 	if (!strlen(params))
 	{
-		addMessageToChatWindow("USAGE: /setclass <class id>");
+		addMessageToChatWindow("{FFFF00}USAGE: /setclass <class id>");
 		return;
 	}
 
@@ -2423,7 +2684,7 @@ void cmd_fakekill(char *params)
 {
 	int killer, reason, amount;
 	if (!strlen(params) || sscanf(params, "%d%d%d", &killer, &reason, &amount) < 3)
-		return addMessageToChatWindow("USAGE: /fakekill <killer id> <reason> <amount>");
+		return addMessageToChatWindow("{FFFF00}USAGE: /fakekill <killer id> <reason> <amount>");
 
 	if (amount < 1 || killer < 0 || killer > SAMP_MAX_PLAYERS)
 		return;
@@ -2435,7 +2696,7 @@ void cmd_fakekill(char *params)
 void cmd_fuckup(char *params)
 {
 	if (params[0] == '\0')
-		return addMessageToChatWindow("USAGE: /fuckup <player id>");
+		return addMessageToChatWindow("{FFFF00}USAGE: /fuckup <player id>");
 
 	int playerid = atoi(params);
 
@@ -2530,7 +2791,7 @@ void cmd_itroll(char* params)
 
 	int ipc = sscanf(params, "%d%d", &playerid, &mode);
 	if (ipc < 2)
-		return addMessageToChatWindow("USAGE: /itroll <player id> <mode>");
+		return addMessageToChatWindow("{FFFF00}USAGE: /itroll <player id> <mode>");
 
 	if (playerid == 65535)
 	{
@@ -2719,7 +2980,7 @@ void cmd_freezetroll(char *params)
 	}
 
 	if (params[0] == '\0')
-		return addMessageToChatWindow("USAGE: /fr <player id>");
+		return addMessageToChatWindow("{FFFF00}USAGE: /fr <player id>");
 
 	int playerid = atoi(params);
 	if (isBadSAMPPlayerID(playerid) || g_Players->iIsListed[playerid] != 1)
@@ -2772,7 +3033,7 @@ void cmd_slapkill(char* params)
 		return;
 	}
 	if (params[0] == '\0')
-		return addMessageToChatWindow("USAGE: /slapkill <player id>");
+		return addMessageToChatWindow("{FFFF00}USAGE: /slapkill <player id>");
 
 	int playerid = atoi(params);
 	if (isBadSAMPPlayerID(playerid) || g_Players->iIsListed[playerid] != 1)
@@ -2799,7 +3060,7 @@ void cmd_slapkill(char* params)
 void cmd_shotrepeater(char *params)
 {
 	if (params[0] == '\0')
-		return addMessageToChatWindow("USAGE: /shotrepeater <value>");
+		return addMessageToChatWindow("{FFFF00}USAGE: /shotrepeater <value>");
 
 	int srval = atoi(params);
 	if (srval < 0 || srval > 100)
@@ -2812,7 +3073,7 @@ void cmd_shotrepeater(char *params)
 void cmd_autounscrambler_delay(char *params)
 {
 	if (params[0] == '\0')
-		return addMessageToChatWindow("USAGE: /autouns_delay <delay>");
+		return addMessageToChatWindow("{FFFF00}USAGE: /autouns_delay <delay>");
 
 	int srval = atoi(params);
 	if (srval < 0 || srval > 4000)
@@ -2888,7 +3149,7 @@ void cmd_friendlist_add(char *params)
 	if (!FriendsListLoaded) return addMessageToChatWindow("Friends list is not loaded!");
 
 	if (params[0] == '\0')
-		return addMessageToChatWindow("USAGE: /friendlist_add <name>");
+		return addMessageToChatWindow("{FFFF00}USAGE: /friendlist_add <name>");
 
 	if (strlen(params) < 3 || strlen(params) > SAMP_MAX_PLAYER_NAME)
 		return addMessageToChatWindow("Name cannot be less than 3 or more than %d characters!", SAMP_MAX_PLAYER_NAME);
@@ -2913,7 +3174,7 @@ void cmd_wordlist_add(char* params)
 	if (!wordListLoaded) return addMessageToChatWindow("Word list is not loaded!");
 
 	if (params[0] == '\0')
-		return addMessageToChatWindow("USAGE: /wordlist_add <name>");
+		return addMessageToChatWindow("{FFFF00}USAGE: /wordlist_add <name>");
 
 	std::string name = params;
 	wordList.push_back(name);
@@ -2935,7 +3196,7 @@ void cmd_friendlist_remove(char *params)
 	if (!FriendsListLoaded) return addMessageToChatWindow("Friends list is not loaded!");
 
 	if (params[0] == '\0')
-		return addMessageToChatWindow("USAGE: /friendlist_remove <name>");
+		return addMessageToChatWindow("{FFFF00}USAGE: /friendlist_remove <name>");
 
 	if (strlen(params) < 3 || strlen(params) > SAMP_MAX_PLAYER_NAME)
 		return addMessageToChatWindow("Name cannot be less than 3 or more than %d characters!", SAMP_MAX_PLAYER_NAME);
@@ -2983,7 +3244,7 @@ void cmd_dualshot(char *params)
 void cmd_dualshot_delay(char *params)
 {
 	if (params[0] == '\0')
-		return addMessageToChatWindow("USAGE: /dsdelay <value>");
+		return addMessageToChatWindow("{FFFF00}USAGE: /dsdelay <value>");
 
 	int srval = atoi(params);
 	if (srval < 0 || srval > 2500)
@@ -3017,7 +3278,7 @@ eWeaponSlot getWeaponSlot(int wep)
 void cmd_switchwep(char *params)
 {
 	if (params[0] == '\0')
-		return addMessageToChatWindow("USAGE: /switchwep <weapon id>");
+		return addMessageToChatWindow("{FFFF00}USAGE: /switchwep <weapon id>");
 
 	int weaponid = atoi(params);
 
@@ -3030,7 +3291,7 @@ void cmd_switchwep(char *params)
 void cmd_gmammo(char *params)
 {
 	if (params[0] == '\0')
-		return addMessageToChatWindow("USAGE: /gmammo <amount>");
+		return addMessageToChatWindow("{FFFF00}USAGE: /gmammo <amount>");
 
 	CWeapon *gWep = pPedSelf->GetWeapon(pPedSelf->GetCurrentWeaponSlot());
 	gWep->SetAmmoTotal(gWep->GetAmmoTotal() + atoi(params));
@@ -3039,7 +3300,7 @@ void cmd_gmammo(char *params)
 void cmd_warp(char *params)
 {
 	if (params[0] == '\0')
-		return addMessageToChatWindow("USAGE: /warp <player id>");
+		return addMessageToChatWindow("{FFFF00}USAGE: /warp <player id>");
 
 	int playerid = atoi(params);
 	
@@ -3075,7 +3336,7 @@ void cmd_warp(char *params)
 void cmd_pweps(char* params)
 {
 	if (params[0] == '\0')
-		return addMessageToChatWindow("USAGE: /pweps <player id>");
+		return addMessageToChatWindow("{FFFF00}USAGE: /pweps <player id>");
 
 	int playerid = atoi(params);
 
@@ -3132,9 +3393,19 @@ void cmd_fpslimiter(char* params)
 
 void cmd_showCMDS(char *)
 {
-	for (int i = 0; i < g_m0dCmdNum; i++)
-	{
-		addMessageToChatWindow("%s", g_m0dCmdlist[i]);
+	addMessageToChatWindow("{999999}Project Fuego Commands:");
+	char message[256];
+	for (int i = 0; i < g_m0dCmdNum; i += 3) {
+		snprintf(message, sizeof(message), "");
+
+		if(strcmp(g_m0dCmdlist[i], "_") != 0)
+			snprintf(message + strlen(message), sizeof(message) - strlen(message), "/%s ", g_m0dCmdlist[i]);
+		if (i + 1 < g_m0dCmdNum && strcmp(g_m0dCmdlist[i + 1], "_") != 0)
+			snprintf(message + strlen(message), sizeof(message) - strlen(message), "/%s ", g_m0dCmdlist[i + 1]);
+		if (i + 2 < g_m0dCmdNum && strcmp(g_m0dCmdlist[i + 2], "_") != 0)
+			snprintf(message + strlen(message), sizeof(message) - strlen(message), "/%s ", g_m0dCmdlist[i + 2]);
+
+		addMessageToChatWindow("{999999}-> {BBBBBB}%s", message);
 	}
 }
 
@@ -3164,14 +3435,14 @@ void cmd_destroyallcars(char* params)
 void cmd_sethpar(char* params)
 {
 	if (params[0] == '\0')
-		return addMessageToChatWindow("USAGE: /.sethp <health> <optional: armour>");
+		return addMessageToChatWindow("{FFFF00}USAGE: /.sethp <health> <optional: armour>");
 
 	int health;
 	int armour;
 	int ipc = sscanf(params, "%d %d", &health, &armour);
 	if (ipc < 1)
 	{
-		addMessageToChatWindow("USAGE: /.sethp <health> <optional: armour>");
+		addMessageToChatWindow("{FFFF00}USAGE: /.sethp <health> <optional: armour>");
 		return;
 	}
 
@@ -3185,7 +3456,7 @@ void cmd_sethpar(char* params)
 void cmd_playervehicle(char* params)
 {
 	if (params[0] == '\0')
-		return addMessageToChatWindow("USAGE: /pveh <player id>");
+		return addMessageToChatWindow("{FFFF00}USAGE: /pveh <player id>");
 
 	int playerid = atoi(params);
 
@@ -3213,7 +3484,7 @@ void cmd_playervehicle(char* params)
 void cmd_attachveh(char* params)
 {
 	if (params[0] == '\0')
-		return addMessageToChatWindow("USAGE: /attveh <vehicle id>");
+		return addMessageToChatWindow("{FFFF00}USAGE: /attveh <vehicle id>");
 
 	int vid = atoi(params);
 
@@ -3252,7 +3523,7 @@ void cmd_lsrpstealguns(char* params)
 	int ipc = sscanf(params, "%d%s%s", &vid, forceAdjust, forceSuicide);
 	if (ipc < 1)
 	{
-		addMessageToChatWindow("USAGE: /lsrp_stealguns <vehicle id> <force adjust true/false> <respawn true/false>");
+		addMessageToChatWindow("{FFFF00}USAGE: /lsrp_stealguns <vehicle id> <force adjust true/false> <respawn true/false>");
 		addMessageToChatWindow("{00CCFF}Force adjust is false by default, what it does is /adjustgun and reset gun positions so trunk guns can be stolen too.");
 		addMessageToChatWindow("{00CCFF}Force adjust can cause you to take some more time in retrieving the guns as it adjusts but it can increase chances?");
 		addMessageToChatWindow("{FFFF00}Respawn is false by default, what it does is kill you afterwards, in LSRP you spawn back with guns.");
@@ -3317,7 +3588,7 @@ void cmd_lsrpstealguns(char* params)
 void cmd_unlockveh(char* params)
 {
 	if (params[0] == '\0')
-		return addMessageToChatWindow("USAGE: /unlockveh <vehicle id>");
+		return addMessageToChatWindow("{FFFF00}USAGE: /unlockveh <vehicle id>");
 
 	int vid = atoi(params);
 
@@ -3348,7 +3619,7 @@ void cmd_unlockveh(char* params)
 void cmd_destroycar(char* params)
 {
 	if (params[0] == '\0')
-		return addMessageToChatWindow("USAGE: /.destroycar <car id>");
+		return addMessageToChatWindow("{FFFF00}USAGE: /.destroycar <car id>");
 
 
 	BitStream bsMsg;
@@ -3431,7 +3702,7 @@ void DamageVehicleDoor(int vid)
 void cmd_damagedoors(char* params)
 {
 	if (params[0] == '\0')
-		return addMessageToChatWindow("USAGE: /damagedoors <car id>");
+		return addMessageToChatWindow("{FFFF00}USAGE: /damagedoors <car id>");
 
 	DamageVehicleDoor(atoi(params));
 
@@ -3479,7 +3750,7 @@ void cmd_carpark(char* params)
 	int playerID;
 
 	int ipc = sscanf(params, "%d", &playerID);
-	if (ipc < 1) return addMessageToChatWindow("USAGE: /.carpark [targetId]");
+	if (ipc < 1) return addMessageToChatWindow("{FFFF00}USAGE: /.carpark [targetId]");
 
 	if (!ValidPlayer(playerID) || !IsPlayerStreamed(playerID)) return addMessageToChatWindow("Target is not valid or not streamed.");
 	if (getPlayerState(playerID) != PLAYER_STATE_ONFOOT) return addMessageToChatWindow("Target is not onfoot.");
@@ -3524,7 +3795,7 @@ void cmd_carpark(char* params)
 
 void cmd_njkill(char* params) {
 	if (params[0] == '\0')
-		return addMessageToChatWindow("USAGE: /njkill <player id>");
+		return addMessageToChatWindow("{FFFF00}USAGE: /njkill <player id>");
 
 	int playerid = atoi(params);
 
@@ -3550,6 +3821,8 @@ void cmd_njkill(char* params) {
 		{
 			return addMessageToChatWindow("Vehicle not streamed/exists.");
 		}
+
+		NJKill = GetTickCount();
 
 		float fDimensions[3];
 		getVehicleModelInfo(cveh->GetModelIndex(), VEHICLE_MODEL_INFO_SIZE, fDimensions);
@@ -3604,8 +3877,6 @@ void cmd_njkill(char* params) {
 		bsEnterVeh.Write(g_Players->pRemotePlayer[playerid]->pPlayerData->inCarData.sVehicleID);
 		bsEnterVeh.Write((UINT8)0);
 		g_RakClient->RPC(RPC_EnterVehicle, &bsEnterVeh);
-
-		NJKill = GetTickCount();
 	}
 	else addMessageToChatWindow("Target is not driving a vehicle");
 	
@@ -3617,7 +3888,7 @@ void cmd_gethere(char* params)
 	int playerID;
 
 	int ipc = sscanf(params, "%d", &playerID);
-	if (ipc < 1) return addMessageToChatWindow("USAGE: /.gethere [targetId]");
+	if (ipc < 1) return addMessageToChatWindow("{FFFF00}USAGE: /.gethere [targetId]");
 
 	if (!ValidPlayer(playerID) || !IsPlayerStreamed(playerID)) return addMessageToChatWindow("Target is not valid or not streamed.");
 	if (getPlayerState(playerID) != PLAYER_STATE_ONFOOT) return addMessageToChatWindow("Target is not onfoot.");
@@ -3682,7 +3953,7 @@ void cmd_pmall(char* param)
 	int ipc = sscanf(param, "%s %[^\t\n]", cmd, msg);
 	if (ipc < 2)
 	{
-		addMessageToChatWindow("USAGE: /.pmall [cmd (/pm)] [msg]");
+		addMessageToChatWindow("{FFFF00}USAGE: /.pmall [cmd (/pm)] [msg]");
 		return;
 	}
 	
@@ -4008,7 +4279,7 @@ void cmd_cc(char* params)
 	}
 
 	if (params[0] == '\0')
-		return addMessageToChatWindow("USAGE: /.cc <player id>");
+		return addMessageToChatWindow("{FFFF00}USAGE: /.cc <player id>");
 
 	int playerid = atoi(params);
 
@@ -4174,6 +4445,24 @@ void cmd_socketstate(char* param)
 	addMessageToChatWindow("[SOCKET STATE] Set to %d", socketState);
 	return;
 }
+
+
+void cmd_compat(char* param)
+{
+	if (ClientJoinInfo.ForceCompat == VER_03DLR1)
+	{
+		ClientJoinInfo.ForceCompat = VER_037R2;
+		ClientJoinInfo.ForceCompatStr = STR_037R2;
+	}
+	else {
+		ClientJoinInfo.ForceCompat = VER_03DLR1;
+		ClientJoinInfo.ForceCompatStr = STR_03DLR1;
+	}
+
+	addMessageToChatWindow("{FF0000}[VERSION-COMPAT] {FFFFFF}Version switched to {FF0000}%s{FFFFFF}.", ClientJoinInfo.ForceCompatStr);
+	return;
+}
+
 void initChatCmds(void)
 {
 	if (g_m0dCommands == true)
@@ -4224,7 +4513,7 @@ void initChatCmds(void)
 	addClientCommand("lsrp_stealguns", cmd_lsrpstealguns);
 	addClientCommand("pweps", cmd_pweps);
 	addClientCommand("njkill", cmd_njkill);
-
+	addClientCommand("compat", cmd_compat);
 }
 
 void SendFakeDriverFullSyncData(stInCarData *picSync, int iUseCarPos)
@@ -4947,7 +5236,7 @@ void cheat_handle_lsrp_gunstealer()
 				if (lsrpStealGuns_ForceAdjust_Waiting == false && (lsrpStealGuns_LastAction + intfc->GetLastPing()) < GetTickCount())
 				{
 					if (lsrpStealGuns_Stage == 0) {
-						std::string wepObjs = "{FFFFFF}Gun Stealer -> Weapon Object IDs: {FFFF00}";
+						std::string wepObjs = "Gun Stealer -> Weapon Object IDs: {FFFF00}";
 						for (auto& objId : lsrpStealGuns_VehicleObjects[lsrpStealGuns_VID])
 						{
 							wepObjs.append(std::to_string(objId) + " ");
@@ -4973,7 +5262,7 @@ void cheat_handle_lsrp_gunstealer()
 					lsrpStealGuns_Stage++; // go to next gun
 					lsrpStealGuns_LastAction = GetTickCount();
 
-					addMessageToChatWindow("{FFFFFF}Gun Stealer -> {FF0000}Weapon %d adjust timeout, moving to next...", lsrpStealGuns_Stage);
+					addMessageToChatWindow("Gun Stealer -> {FF0000}Weapon %d adjust timeout, moving to next...", lsrpStealGuns_Stage);
 				}
 				break;
 			}
@@ -4989,7 +5278,7 @@ void cheat_handle_lsrp_gunstealer()
 				lsrpStealGuns_ForceAdjust = false;
 				lsrpStealGuns_Stage = 1;
 
-				addMessageToChatWindow("{FFFFFF}Gun Stealer -> {00FF33}Force adjust takegun attempt...");
+				addMessageToChatWindow("Gun Stealer -> {00FF33}Force adjust takegun attempt...");
 				break;
 			}
 			}
@@ -5023,7 +5312,7 @@ void cheat_handle_lsrp_gunstealer()
 					lsrpStealGuns_Working = false;
 					lsrpStealGuns_LastAction = GetTickCount();
 
-					addMessageToChatWindow("{FFFFFF}Gun Stealer -> {00FF33}Steal attempt completed.");
+					addMessageToChatWindow("Gun Stealer -> {00FF33}Steal attempt completed.");
 
 					if (lsrpStealGuns_RespawnAfter) {
 						pPedSelf->SetHealth(0.0);

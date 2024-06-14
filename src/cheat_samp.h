@@ -84,3 +84,26 @@ extern bool										g_bPlayerMuted[SAMP_MAX_PLAYERS];
 extern bool										g_NameHidden[SAMP_MAX_PLAYERS];
 extern std::vector<std::string>					Friends;
 extern bool										FriendsListLoaded;
+
+#define VER_037R2		4057
+#define STR_037R2		"0.3.7-R2"
+
+#define VER_03DLR1		4062
+#define STR_03DLR1		"0.3.DL-R1"
+
+struct _ClientJoinInfo {
+	UINT32 iVersion;
+	UINT8 byteMod;
+	UINT8 byteNicknameLen;
+	char NickName[256];
+
+	UINT32 uiClientChallengeResponse;
+	UINT8 byteAuthKeyLen;
+	char auth_key[256];
+	UINT8 iClientVerLen;
+	char ClientVersion[256];
+
+	UINT32 ForceCompat = VER_03DLR1;
+	const char* ForceCompatStr = STR_03DLR1;
+};
+extern _ClientJoinInfo ClientJoinInfo;

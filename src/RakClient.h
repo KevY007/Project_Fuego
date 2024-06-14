@@ -60,6 +60,12 @@ enum RPCEnumeration
 	RPC_ExitVehicle					= 154,
 	RPC_UpdateScoresPingsIPs		= 155,
 
+	// 0.3.DL New - Client
+	RPC_FinishedDownloading			= 184,
+	RPC_RequestDffFile				= 181,
+	RPC_RequestTxdFile				= 182,
+
+
 	// server RPC's
 	RPC_SetPlayerName				= 11,
 	RPC_SetPlayerPos				= 12,
@@ -174,6 +180,13 @@ enum RPCEnumeration
 	RPC_WorldVehicleAdd				= 164,
 	RPC_WorldVehicleRemove			= 165,
 	RPC_WorldPlayerDeath 			= 166,
+	RPC_ShowActor					= 171,
+
+	// 0.3.DL New - Server
+	
+	RPC_ModelInfo					= 179,
+	RPC_ModelFile					= 183,
+	RPC_SrcFinishedDownloading		= 185,
 };
 
 enum PacketEnumeration
