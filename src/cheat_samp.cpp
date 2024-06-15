@@ -883,6 +883,7 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 			{
 				if (ClientJoinInfo.ForceCompat != VER_03DLR1)
 				{
+					BitStream copied;
 					BitStream bs(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
 
 					uint32_t wPlayerID, dSkinID;
@@ -891,9 +892,11 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 
 					bs.Reset();
 
-					bs.Write((short)wPlayerID);
-					bs.Write(dSkinID);
-					bs.Write((uint32_t)0);
+					copied.Write((short)wPlayerID);
+					copied.Write(dSkinID);
+					copied.Write((uint32_t)0);
+					copied.CopyData(&rpcParams->input);
+					rpcParams->numberOfBitsOfData = copied.GetNumberOfBitsUsed();
 				}
 				break;
 			}
@@ -901,6 +904,7 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 			{
 				if (ClientJoinInfo.ForceCompat != VER_03DLR1)
 				{
+					BitStream copied;
 					BitStream bs(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
 
 					uint16_t wPlayerID;
@@ -925,16 +929,18 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 
 					bs.Reset();
 
-					bs.Write(wPlayerID);
-					bs.Write(team);
-					bs.Write(dSkinID);
-					bs.Write((uint32_t)0); // Custom skin (although unused)
-					bs.Write(PosX);
-					bs.Write(PosY);
-					bs.Write(PosZ);
-					bs.Write(facing_angle);
-					bs.Write(player_color);
-					bs.Write(fighting_style);
+					copied.Write(wPlayerID);
+					copied.Write(team);
+					copied.Write(dSkinID);
+					copied.Write((uint32_t)0); // Custom skin (although unused)
+					copied.Write(PosX);
+					copied.Write(PosY);
+					copied.Write(PosZ);
+					copied.Write(facing_angle);
+					copied.Write(player_color);
+					copied.Write(fighting_style);
+					copied.CopyData(&rpcParams->input);
+					rpcParams->numberOfBitsOfData = copied.GetNumberOfBitsUsed();
 				}
 				break;
 			}
@@ -942,6 +948,7 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 			{
 				if (ClientJoinInfo.ForceCompat != VER_03DLR1)
 				{
+					BitStream copied;
 					BitStream bs(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
 					
 					uint16_t wActorID;
@@ -964,15 +971,17 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 
 					bs.Reset();
 
-					bs.Write(wActorID);
-					bs.Write(SkinID);
-					bs.Write((uint32_t)0); // Custom actor skin
-					bs.Write(X);
-					bs.Write(Y);
-					bs.Write(Z);
-					bs.Write(Angle);
-					bs.Write(health);
-					bs.Write(bInvulnerable);
+					copied.Write(wActorID);
+					copied.Write(SkinID);
+					copied.Write((uint32_t)0); // Custom actor skin
+					copied.Write(X);
+					copied.Write(Y);
+					copied.Write(Z);
+					copied.Write(Angle);
+					copied.Write(health);
+					copied.Write(bInvulnerable);
+					copied.CopyData(&rpcParams->input);
+					rpcParams->numberOfBitsOfData = copied.GetNumberOfBitsUsed();
 				}
 				break;
 			}
@@ -980,17 +989,18 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 			{
 				if (ClientJoinInfo.ForceCompat != VER_03DLR1)
 				{
+					BitStream copied;
 					BitStream bs(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
 
 					uint8_t byteRequestOutcome,
 						byteTeam;
-					int32_t iSkin;
+					uint32_t iSkin;
 					uint8_t unk;
 					float vecPosX,
 						vecPosY,
 						vecPosZ,
 						fRotation;
-					int32_t iSpawnWeapons0,
+					uint32_t iSpawnWeapons0,
 						iSpawnWeapons1,
 						iSpawnWeapons2,
 						iSpawnWeaponsAmmo0,
@@ -1014,21 +1024,23 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 
 					bs.Reset();
 
-					bs.Write(byteRequestOutcome);
-					bs.Write(byteTeam);
-					bs.Write(iSkin);
-					bs.Write((uint32_t)0); // Custom actor skin (unused)
-					bs.Write(unk);
-					bs.Write(vecPosX);
-					bs.Write(vecPosY);
-					bs.Write(vecPosZ);
-					bs.Write(fRotation);
-					bs.Write(iSpawnWeapons0);
-					bs.Write(iSpawnWeapons1);
-					bs.Write(iSpawnWeapons2);
-					bs.Write(iSpawnWeaponsAmmo0);
-					bs.Write(iSpawnWeaponsAmmo1);
-					bs.Write(iSpawnWeaponsAmmo2);
+					copied.Write(byteRequestOutcome);
+					copied.Write(byteTeam);
+					copied.Write(iSkin);
+					copied.Write((uint32_t)0); // Custom actor skin (unused)
+					copied.Write(unk);
+					copied.Write(vecPosX);
+					copied.Write(vecPosY);
+					copied.Write(vecPosZ);
+					copied.Write(fRotation);
+					copied.Write(iSpawnWeapons0);
+					copied.Write(iSpawnWeapons1);
+					copied.Write(iSpawnWeapons2);
+					copied.Write(iSpawnWeaponsAmmo0);
+					copied.Write(iSpawnWeaponsAmmo1);
+					copied.Write(iSpawnWeaponsAmmo2);
+					copied.CopyData(&rpcParams->input);
+					rpcParams->numberOfBitsOfData = copied.GetNumberOfBitsUsed();
 				}
 				break;
 			}
@@ -1036,16 +1048,17 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 			{
 				if (ClientJoinInfo.ForceCompat != VER_03DLR1)
 				{
+					BitStream copied;
 					BitStream bs(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
 
 					uint8_t byteTeam;
-					int32_t iSkin;
+					uint32_t iSkin;
 					uint8_t unk;
 					float vecPosX,
 						vecPosY,
 						vecPosZ,
 						fRotation;
-					int32_t iSpawnWeapons0,
+					uint32_t iSpawnWeapons0,
 						iSpawnWeapons1,
 						iSpawnWeapons2,
 						iSpawnWeaponsAmmo0,
@@ -1068,20 +1081,22 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 
 					bs.Reset();
 
-					bs.Write(byteTeam);
-					bs.Write(iSkin);
-					bs.Write((uint32_t)0); // Custom actor skin (unused)
-					bs.Write(unk);
-					bs.Write(vecPosX);
-					bs.Write(vecPosY);
-					bs.Write(vecPosZ);
-					bs.Write(fRotation);
-					bs.Write(iSpawnWeapons0);
-					bs.Write(iSpawnWeapons1);
-					bs.Write(iSpawnWeapons2);
-					bs.Write(iSpawnWeaponsAmmo0);
-					bs.Write(iSpawnWeaponsAmmo1);
-					bs.Write(iSpawnWeaponsAmmo2);
+					copied.Write(byteTeam);
+					copied.Write(iSkin);
+					copied.Write((uint32_t)0); // Custom actor skin (unused)
+					copied.Write(unk);
+					copied.Write(vecPosX);
+					copied.Write(vecPosY);
+					copied.Write(vecPosZ);
+					copied.Write(fRotation);
+					copied.Write(iSpawnWeapons0);
+					copied.Write(iSpawnWeapons1);
+					copied.Write(iSpawnWeapons2);
+					copied.Write(iSpawnWeaponsAmmo0);
+					copied.Write(iSpawnWeaponsAmmo1);
+					copied.Write(iSpawnWeaponsAmmo2);
+					copied.CopyData(&rpcParams->input);
+					rpcParams->numberOfBitsOfData = copied.GetNumberOfBitsUsed();
 				}
 				break;
 			}
@@ -1438,9 +1453,9 @@ bool OnSendRPC(int uniqueID, BitStream *parameters, PacketPriority priority, Pac
 		parameters->Read(ClientJoinInfo.ClientVersion, ClientJoinInfo.iClientVerLen);
 		ClientJoinInfo.ClientVersion[ClientJoinInfo.iClientVerLen] = '\0';
 
-		addMessageToChatWindow("{FF0000}[VERSION-COMPAT] {FFFFFF}If you wish to join as {FF0000}0.3.7-R2{FFFFFF}, use {FF0000}/compat {FFFFFF}within 3s...");
+		addMessageToChatWindow("{FF0000}[VERSION-COMPAT] {FFFFFF}If you wish to join as {FF0000}0.3.7-R2{FFFFFF}, use {FF0000}/compat {FFFFFF}within 5s...");
 
-		std::thread(SendClientJoin, 3000).detach();
+		std::thread(SendClientJoin, 5000).detach();
 		return false;
 	}
 
