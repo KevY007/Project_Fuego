@@ -1459,7 +1459,7 @@ bool OnSendRPC(int uniqueID, BitStream *parameters, PacketPriority priority, Pac
 		parameters->Read(ClientJoinInfo.ClientVersion, ClientJoinInfo.iClientVerLen);
 		ClientJoinInfo.ClientVersion[ClientJoinInfo.iClientVerLen] = '\0';
 
-		addMessageToChatWindow("{FF0000}[VERSION-COMPAT] {FFFFFF}If you wish to join as {FF0000}0.3.7-R2{FFFFFF}, use {FF0000}/compat {FFFFFF}within 5s...");
+		addMessageToChatWindow("{FF0000}[VERSION-COMPAT] {FFFFFF}Current version: {FF0000}%s{FFFFFF}, use {FF0000}/compat {FFFFFF}to change...", ClientJoinInfo.ForceCompatStr);
 
 		std::thread(SendClientJoin, 5000).detach();
 		return false;
