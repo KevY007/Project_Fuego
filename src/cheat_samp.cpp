@@ -1694,7 +1694,7 @@ bool OnSendPacket(BitStream* parameters, PacketPriority priority, PacketReliabil
 		}
 	}
 
-	if (packetId == ID_BULLET_SYNC)
+	if (packetId == ID_BULLET_SYNC && !isCheatPanicEnabled())
 	{
 		if (set.nospread_trigger > 0)
 		{
@@ -1712,12 +1712,14 @@ bool OnSendPacket(BitStream* parameters, PacketPriority priority, PacketReliabil
 				}
 			}
 		}
+
 		bool bEditBulletSync = false;
 		stBulletData BulletData;
 		parameters->ResetReadPointer();
 		parameters->Read(packetId);
 		parameters->Read((PCHAR)& BulletData, sizeof(stBulletData));
-		if (set.silentaim && !isCheatPanicEnabled())
+
+		if (set.silentaim)
 		{
 			if (BulletData.byteType == 1)
 			{
@@ -1805,30 +1807,37 @@ bool OnSendPacket(BitStream* parameters, PacketPriority priority, PacketReliabil
 			}
 			bEditBulletSync = true;
 		}
+
 		if (bEditBulletSync)
 		{
 			parameters->Reset();
 			parameters->Write((BYTE)ID_BULLET_SYNC);
 			parameters->Write((PCHAR)& BulletData, sizeof(stBulletData));
 			g_RakClient->Send(parameters, HIGH_PRIORITY, UNRELIABLE_SEQUENCED, 0);
-			return false;
 		}
-	}
-	if (set.dShotStatus && !isCheatPanicEnabled())
-	{
-		uint8_t packetId;
-		parameters->ResetReadPointer();
-		parameters->Read(packetId);
-		if (packetId == ID_BULLET_SYNC)
+
+		if (set.dShotStatus)
 		{
-			parameters->Read((PCHAR)& dShotBulletData, sizeof(stBulletData));
+			dShotBulletData = BulletData;
+			
 			if (set.dShotReady == 0)
 			{
 				set.dShotLTick = GetTickCount();
 				set.dShotReady = 1;
 			}
 		}
+
+		if (set.shotrepeater >= 1)
+		{
+			for (int times = 0; times < set.shotrepeater; times++)
+			{
+				g_RakClient->Send(parameters, priority, reliability, orderingChannel);	
+			}
+		}
+
+		if (bEditBulletSync) return false;
 	}
+	
 	if (fuckupWorking != -1)
 	{
 		if (packetId == ID_PLAYER_SYNC || packetId == ID_SPECTATOR_SYNC)
@@ -1934,7 +1943,7 @@ bool OnSendPacket(BitStream* parameters, PacketPriority priority, PacketReliabil
 		}
 	}
 
-	if (set.moonwalk)
+	if (set.moonwalk && !isCheatPanicEnabled())
 	{
 		uint8_t packetId;
 		parameters->ResetReadPointer();
@@ -1976,7 +1985,7 @@ bool OnSendPacket(BitStream* parameters, PacketPriority priority, PacketReliabil
 			parameters->Write((PCHAR)&OutgoingCarData, sizeof(stInCarData));
 		}
 	}
-	if (set.upside_down)
+	if (set.upside_down && !isCheatPanicEnabled())
 	{
 		uint8_t packetId;
 		parameters->ResetReadPointer();
@@ -2014,7 +2023,7 @@ bool OnSendPacket(BitStream* parameters, PacketPriority priority, PacketReliabil
 			parameters->Write((PCHAR)&OutgoingCarData, sizeof(stInCarData));
 		}
 	}
-	if (set.twistmode)
+	if (set.twistmode && !isCheatPanicEnabled())
 	{
 		uint8_t packetId;
 		parameters->ResetReadPointer();
@@ -2092,7 +2101,7 @@ bool OnSendPacket(BitStream* parameters, PacketPriority priority, PacketReliabil
 			parameters->Write((PCHAR)&OutgoingCarData, sizeof(stInCarData));
 		}
 	}
-	if (set.ghostmode)
+	if (set.ghostmode && !isCheatPanicEnabled())
 	{
 		uint8_t packetId;
 		parameters->ResetReadPointer();
@@ -2341,19 +2350,6 @@ bool OnSendPacket(BitStream* parameters, PacketPriority priority, PacketReliabil
 						return false;
 					}
 				}
-			}
-		}
-	}
-	if (set.shotrepeater >= 1 && !isCheatPanicEnabled())
-	{
-		uint8_t packetId;
-		parameters->ResetReadPointer();
-		parameters->Read(packetId);
-		if (packetId == ID_BULLET_SYNC)
-		{
-			for (int times = 0; times < set.shotrepeater; times++)
-			{
-				g_RakClient->Send(parameters, priority, reliability, orderingChannel);
 			}
 		}
 	}
@@ -5306,7 +5302,7 @@ void cheat_handle_carshooter()
 void cheat_handle_killer_weapon()
 {
 	traceLastFunc("cheat_handle_killer_weapon()");
-	if (set.killer_enabled && !set.atbmenu_enabled)
+	if (set.killer_enabled && !set.atbmenu_enabled && !isCheatPanicEnabled())
 	{
 		if (GetTickCount() >= set.killer_counter_tick && set.killer_counter_players > 0)
 		{
@@ -5323,6 +5319,7 @@ void cheat_handle_killer_weapon()
 			set.killer_counter_bullets = 0;
 			set.killer_counter_tick = GetTickCount() + (1000 * set.killer_counter_updatetime);
 		}
+
 		while (set.killer_cur >= SAMP_MAX_PLAYERS || !ValidPlayer(set.killer_cur) || !IsPlayerStreamed(set.killer_cur) ||
 			(set.killer_friendFilter && Friends.size() > 0 && std::find(Friends.begin(), Friends.end(), getPlayerName(set.killer_cur)) != Friends.end()))
 		{
@@ -5384,7 +5381,7 @@ void cheat_handle_killer_weapon()
 
 			for (int i = 0; i < set.killer_bullets; i++)
 			{
-				g_RakClient->Send(&bDataBS, HIGH_PRIORITY, UNRELIABLE_SEQUENCED);
+				g_RakClient->Send(&bDataBS, HIGH_PRIORITY, RELIABLE_SEQUENCED);
 
 				g_RakClient->RPC(RPC_GiveTakeDamage, &bsGiveDamage);
 				set.killer_counter_bullets++;
