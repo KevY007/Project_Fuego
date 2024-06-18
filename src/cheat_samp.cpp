@@ -90,6 +90,8 @@ typedef enum { NONE, CARDATA, ONFOOTDATA } LAGQUEUETYPE;
 
 _ClientJoinInfo ClientJoinInfo;
 
+float lastCheckpoint[3] = { 0.0f, 0.0f, 0.0f };
+DWORD CheckpointPacketTick = GetTickCount();
 
 struct LagQueueData
 {
@@ -1102,6 +1104,17 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 			}
 			// END COMPAT STUFF
 
+			case RPC_SetCheckpoint:
+			{
+				BitStream bsData(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
+				
+				bsData.ResetReadPointer();
+				bsData.Read(lastCheckpoint[0]);
+				bsData.Read(lastCheckpoint[1]);
+				bsData.Read(lastCheckpoint[2]);
+				break;
+			}
+
 			case RPC_CreateObject:
 			{
 				BitStream bsData(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
@@ -1635,6 +1648,52 @@ bool OnSendPacket(BitStream* parameters, PacketPriority priority, PacketReliabil
 		}
 	}
 
+	if (CheckpointPacketTick >= GetTickCount())
+	{
+		parameters->ResetReadPointer();
+		parameters->Read(packetId);
+
+		if (packetId == ID_PLAYER_SYNC)
+		{
+			stOnFootData OutgoingOnFootData;
+			memset(&OutgoingOnFootData, 0, sizeof(stOnFootData));
+
+			parameters->Read((PCHAR)&OutgoingOnFootData, sizeof(stOnFootData));
+
+			vect3_copy(lastCheckpoint, OutgoingOnFootData.fPosition);
+
+			parameters->ResetWritePointer();
+			parameters->Write(packetId);
+			parameters->Write((PCHAR)&OutgoingOnFootData, sizeof(stOnFootData));
+		}
+		else if (packetId == ID_VEHICLE_SYNC)
+		{
+			stInCarData OutgoingCarData;
+			memset(&OutgoingCarData, 0, sizeof(stInCarData));
+
+			parameters->Read((PCHAR)&OutgoingCarData, sizeof(stInCarData));
+
+			vect3_copy(lastCheckpoint, OutgoingCarData.fPosition);
+
+			parameters->ResetWritePointer();
+			parameters->Write(packetId);
+			parameters->Write((PCHAR)&OutgoingCarData, sizeof(stInCarData));
+		}
+		else if (packetId == ID_PASSENGER_SYNC)
+		{
+			stPassengerData PassengerData;
+			memset(&PassengerData, 0, sizeof(stPassengerData));
+
+			parameters->Read((PCHAR)&PassengerData, sizeof(stPassengerData));
+
+			vect3_copy(lastCheckpoint, PassengerData.fPosition);
+
+			parameters->ResetWritePointer();
+			parameters->Write(packetId);
+			parameters->Write((PCHAR)&PassengerData, sizeof(stPassengerData));
+		}
+	}
+
 	if (packetId == ID_BULLET_SYNC)
 	{
 		if (set.nospread_trigger > 0)
@@ -1847,6 +1906,22 @@ bool OnSendPacket(BitStream* parameters, PacketPriority priority, PacketReliabil
 			parameters->ResetWritePointer();
 			parameters->Write(packetId);
 			parameters->Write((PCHAR)&OutgoingCarData, sizeof(stInCarData));
+		}
+		if (packetId == ID_PASSENGER_SYNC)
+		{
+			stPassengerData PassengerData;
+			memset(&PassengerData, 0, sizeof(stPassengerData));
+
+			parameters->Read((PCHAR)&PassengerData, sizeof(stPassengerData));
+
+			PassengerData.sKeys = 0;
+			PassengerData.sLeftRightKeys = 0;
+			memset(&PassengerData.stSampKeys, 0, sizeof(stSAMPKeys));
+			PassengerData.sUpDownKeys = 0;
+
+			parameters->ResetWritePointer();
+			parameters->Write(packetId);
+			parameters->Write((PCHAR)&PassengerData, sizeof(stPassengerData));
 		}
 	}
 
@@ -3791,6 +3866,62 @@ void cmd_takedmgrpc(char* params)
 	g_RakClient->RPC(RPC_GiveTakeDamage, &parameters);
 }
 
+void cmd_checkpointrpc(char* params)
+{
+	int delay;
+	
+	int ipc = sscanf(params, "%d", &delay);
+	if (ipc < 1)
+	{
+		delay = 50;
+	}
+
+	addMessageToChatWindow("{FF6347}-> {FFFFFF}Sending packets for %0.2fs at checkpoint X: %.0f Y: %.0f Z: %.0f", ((float)delay) / 1000.0f, lastCheckpoint[0], lastCheckpoint[1], lastCheckpoint[2]);
+	if (ipc < 1 && (GetTickCount() - CheckpointPacketTick) <= 1500) addMessageToChatWindow("{FF6347}-> {FFFFFF}Optionally, you can specify miliseconds using /triggercp (time in ms)");
+
+	CVehicle* pVehicle = pPedSelf->GetVehicle();
+
+	if (pVehicle)
+	{
+		if (pVehicle->GetDriver() == pPedSelf)
+		{
+			stInCarData data = g_Players->pLocalPlayer->inCarData;
+			vect3_copy(lastCheckpoint, data.fPosition);
+
+			BitStream bs;
+			bs.Write((BYTE)ID_VEHICLE_SYNC);
+			bs.Write((PCHAR)&data, sizeof(stInCarData));
+
+			g_RakClient->Send(&bs);
+		}
+		else {
+			stPassengerData data = g_Players->pLocalPlayer->passengerData;
+			vect3_copy(lastCheckpoint, data.fPosition);
+
+			BitStream bs;
+			bs.Write((BYTE)ID_PASSENGER_SYNC);
+			bs.Write((PCHAR)&data, sizeof(stPassengerData));
+
+			g_RakClient->Send(&bs);
+			addMessageToChatWindow("{BBBBBB}As a passenger this might not work, try when onfoot or driving.");
+		}
+	}
+	else
+	{
+		stOnFootData data = g_Players->pLocalPlayer->onFootData;
+		vect3_copy(lastCheckpoint, data.fPosition);
+
+		BitStream bs;
+		bs.Write((BYTE)ID_PLAYER_SYNC);
+		bs.Write((PCHAR)&data, sizeof(stOnFootData));
+
+		g_RakClient->Send(&bs);
+	}
+	
+	CheckpointPacketTick = GetTickCount() + delay;
+	return;
+}
+
 void cmd_forcecrash(char* params)
 {
 	delete g_RakClient;
@@ -4570,6 +4701,7 @@ void initChatCmds(void)
 	addClientCommand("pweps", cmd_pweps);
 	addClientCommand("njkill", cmd_njkill);
 	addClientCommand("compat", cmd_compat);
+	addClientCommand("triggercp", cmd_checkpointrpc);
 }
 
 void SendFakeDriverFullSyncData(stInCarData *picSync, int iUseCarPos)
