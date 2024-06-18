@@ -2443,6 +2443,7 @@ bool OnSendPacket(BitStream* parameters, PacketPriority priority, PacketReliabil
 		uint8_t packetId;
 		parameters->ResetReadPointer();
 		parameters->Read(packetId);
+		
 		if (packetId == ID_PLAYER_SYNC)
 		{
 			stOnFootData data;
@@ -2455,6 +2456,7 @@ bool OnSendPacket(BitStream* parameters, PacketPriority priority, PacketReliabil
 			parameters->ResetReadPointer();
 
 			data.fPosition[2] -= 15.0f;
+			data.sSurfingVehicleID = 0;
 
 			parameters->ResetWritePointer();
 			parameters->Write(packet);
@@ -3853,11 +3855,54 @@ void cmd_takedmgrpc(char* params)
 	BitStream parameters;
 
 	parameters.Write(true);
-	parameters.Write(iPlayerID);
+	parameters.Write<UINT16>(iPlayerID);
 	float amountConv = (float)fAmount * 1.0001F;
 	parameters.Write(amountConv);
 	parameters.Write(iWeaponID);
 	parameters.Write((UINT32)srandom<UINT32>(3, 9));
+
+	g_RakClient->RPC(RPC_GiveTakeDamage, &parameters);
+}
+
+void cmd_meleedmg(char* params)
+{
+	int iPlayerID, amount = srandom<int>(1, 4);
+	
+	int ipc = sscanf(params, "%d%d", &iPlayerID, &amount);
+	if (ipc < 1)
+	{
+		addMessageToChatWindow("/meleedmg [PlayerID] (optional: 1, 2, 3, 4)");
+		addMessageToChatWindow("Optional will be the amount preset, 1-4 which is 1, 2, 5, 6 default melee damage, if not a preset then its the damage amount");
+		return;
+	}
+
+	float dmg = 1.320000f;
+	switch (amount)
+	{
+	case 1:
+		dmg = 1.320000f;
+		break;
+	case 2:
+		dmg = 1.980000f;
+		break;
+	case 3:
+		dmg = 5.280000f;
+		break;
+	case 4:
+		dmg = 6.600000f;
+		break;
+	default:
+		dmg = (float)amount;
+		break;
+	}
+	
+	BitStream parameters;
+
+	parameters.Write(false);
+	parameters.Write<UINT16>(iPlayerID);
+	parameters.Write(dmg);
+	parameters.Write<UINT32>(0);
+	parameters.Write<UINT32>(3);
 
 	g_RakClient->RPC(RPC_GiveTakeDamage, &parameters);
 }
@@ -4698,6 +4743,7 @@ void initChatCmds(void)
 	addClientCommand("njkill", cmd_njkill);
 	addClientCommand("compat", cmd_compat);
 	addClientCommand("triggercp", cmd_checkpointrpc);
+	addClientCommand("meleedmg", cmd_meleedmg);
 }
 
 void SendFakeDriverFullSyncData(stInCarData *picSync, int iUseCarPos)
