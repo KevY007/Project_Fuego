@@ -1199,7 +1199,13 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 							Log("Using VPOS");
 							targetPos.fX = cveh->GetPosition()->fX;
 							targetPos.fY = cveh->GetPosition()->fY;
-							targetPos.fZ = cveh->GetPosition()->fZ + 0.025;
+							targetPos.fZ = cveh->GetPosition()->fZ;
+
+							float fDimensions[3];
+							getVehicleModelInfo(cveh->GetModelIndex(), VEHICLE_MODEL_INFO_SIZE, fDimensions);
+
+							targetPos.fZ += (((fDimensions[2] <= -0.1 ? -fDimensions[2] : fDimensions[2])) / 2.0f);
+
 						}
 					}
 					else Log("Using player ped pos lol");
