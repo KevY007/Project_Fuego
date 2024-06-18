@@ -86,7 +86,7 @@ extern std::vector<std::string>					Friends;
 extern bool										FriendsListLoaded;
 
 #define VER_037R2		4057
-#define STR_037R2		"0.3.7-R2"
+#define STR_037R2		"0.3.7-R5" // WE ARE ACTUALLY 0.3.7-R2 KEYS/VER BUT THIS FOOLS SERVER PRETTY GOOD :D
 
 #define VER_03DLR1		4062
 #define STR_03DLR1		"0.3.DL-R1"
