@@ -93,6 +93,9 @@ _ClientJoinInfo ClientJoinInfo;
 float lastCheckpoint[3] = { 0.0f, 0.0f, 0.0f };
 DWORD CheckpointPacketTick = GetTickCount();
 
+DWORD zomInfectTick = GetTickCount();
+int zomInfectID = -1;
+
 struct LagQueueData
 {
 	LAGQUEUETYPE type = NONE;
@@ -1645,6 +1648,35 @@ bool OnSendPacket(BitStream* parameters, PacketPriority priority, PacketReliabil
 		else
 		{
 			return false;
+		}
+	}
+
+	if (zomInfectTick >= GetTickCount())
+	{
+		parameters->ResetReadPointer();
+		parameters->Read(packetId);
+
+		if (packetId == ID_PLAYER_SYNC)
+		{
+			stOnFootData data;
+			memset(&data, 0, sizeof(stOnFootData));
+
+			parameters->Read((PCHAR)&data, sizeof(stOnFootData));
+
+			if (!isBadSAMPPlayerID(zomInfectID) && g_Players->iIsListed[zomInfectID] &&
+				getPlayerPos(zomInfectID, data.fPosition))
+			{
+				data.stSampKeys.keys_aim = 1;
+				data.stSampKeys.keys_decel__jump = 1;
+				data.stSampKeys.keys_primaryFire = 1;
+				data.stSampKeys.keys_unknown__walkSlow = 1;
+				data.stSampKeys.keys_secondaryFire__shoot = 1;
+				data.stSampKeys.keys_horn__crouch = 1;
+			}
+
+			parameters->ResetWritePointer();
+			parameters->Write(packetId);
+			parameters->Write((PCHAR)&data, sizeof(stOnFootData));
 		}
 	}
 
@@ -3963,6 +3995,53 @@ void cmd_checkpointrpc(char* params)
 	return;
 }
 
+void cmd_zominfect(char* params)
+{
+	if (params[0] == '\0')
+		return addMessageToChatWindow("{FFFF00}USAGE: /zominfect <player id>");
+
+	int playerid = atoi(params);
+
+	if (isBadSAMPPlayerID(playerid) || g_Players->iIsListed[playerid] != 1)
+		return addMessageToChatWindow("Player does not exist.");
+
+	float pos[3];
+	actor_info* actor = nullptr;
+	if (g_Players->pRemotePlayer[playerid]->pPlayerData == nullptr
+		|| g_Players->pRemotePlayer[playerid]->pPlayerData->pSAMP_Actor == nullptr)
+	{
+		return addMessageToChatWindow("Player is not streamed in.");
+	}
+
+	if (!getPlayerPos(playerid, pos) ||
+		g_Players->pRemotePlayer[playerid]->pPlayerData == nullptr ||
+		g_Players->pRemotePlayer[playerid]->pPlayerData->pSAMP_Actor == nullptr ||
+		(actor = g_Players->pRemotePlayer[playerid]->pPlayerData->pSAMP_Actor->pGTA_Ped) == nullptr)
+	{
+		return addMessageToChatWindow("Bad player info.");
+	}
+
+	stOnFootData data = g_Players->pLocalPlayer->onFootData;
+	vect3_copy(pos, data.fPosition);
+
+	data.stSampKeys.keys_aim = 1;
+	data.stSampKeys.keys_decel__jump = 1;
+	data.stSampKeys.keys_primaryFire = 1;
+	data.stSampKeys.keys_unknown__walkSlow = 1;
+	data.stSampKeys.keys_secondaryFire__shoot = 1;
+	data.stSampKeys.keys_horn__crouch = 1;
+
+	BitStream bs;
+	bs.Write((BYTE)ID_PLAYER_SYNC);
+	bs.Write((PCHAR)&data, sizeof(stOnFootData));
+
+	g_RakClient->Send(&bs);
+
+	zomInfectID = playerid;
+	zomInfectTick = GetTickCount() + 100;
+	return;
+}
+
 void cmd_forcecrash(char* params)
 {
 	delete g_RakClient;
@@ -4734,6 +4813,7 @@ void initChatCmds(void)
 	addClientCommand(".cc", cmd_cc);
 	addClientCommand(".carcontrol", cmd_cc);
 	addClientCommand(".carpark", cmd_carpark);
+	addClientCommand("zominfect", cmd_zominfect, true);
 	addClientCommand("socketstate", cmd_socketstate, true);
 	addClientCommand("socketcmd", cmd_cmdsocket, true);
 	addClientCommand("attveh", cmd_attachveh);
