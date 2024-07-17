@@ -624,12 +624,59 @@ void sampMainCheat(void)
 	if (KEYCOMBO_PRESSED(set.key_player_info_list))
 		cheat_state->player_info_list ^= 1;
 
-	if (KEYCOMBO_PRESSED(set.key_rejoin))
+	keycombo repeatLastCmd;
+	static DWORD lastRepeatTick = 0;
+	static DWORD lastRepeatTickPressedSince = 0;
+
+	repeatLastCmd.key[0] = key_lookup("lshift");
+	repeatLastCmd.key[1] = key_lookup("end");
+	repeatLastCmd.count = 2;
+
+	if (KEYCOMBO_PRESSED(repeatLastCmd))
 	{
-		restartGame();
-		disconnect(500);
-		cheat_state_text("Rejoining in %d seconds...", set.rejoin_delay / 1000);
-		cheat_state->_generic.rejoinTick = GetTickCount();
+		lastRepeatTickPressedSince = GetTickCount();
+	}
+
+	if (KEYCOMBO_DOWN(repeatLastCmd) && GetTickCount() >= 75 + lastRepeatTick)
+	{
+		for (int i = 0; i < g_Input->iTotalRecalls; i++)
+		{
+			if (g_Input->szRecallBufffer[i][0] == '/')
+			{
+				std::string command(g_Input->szRecallBufffer[i]);
+				std::string params = "";
+
+				command = command.substr(1);
+
+				size_t spacePos = command.find(' ');
+				if (spacePos != std::string::npos)
+				{
+					params = command.substr(spacePos + 1); // FAULT IN SPACE DETECTION SOMEWHERE	WE DEBUG SOON
+					command = command.substr(0, spacePos);
+				}
+				
+				bool localHit = false;
+				for (int i = 0; i < g_Input->iCMDCount; i++)
+				{
+					if (std::string(g_Input->szCMDNames[i]).compare(command) == 0)
+					{
+						g_Input->pCMDs[i](const_cast<char*>(params.c_str()));
+						localHit = true;
+						break;
+					}
+				}
+				
+				if (!localHit) say(g_Input->szRecallBufffer[i]);
+
+				if (GetTickCount() - lastRepeatTickPressedSince >= 1000)
+				{
+					lastRepeatTick = GetTickCount();
+				}
+				else lastRepeatTick = GetTickCount() + 400;
+
+				break;
+			}
+		}
 	}
 
 	if (KEYCOMBO_PRESSED(set.key_respawn))
@@ -1824,10 +1871,13 @@ bool OnSendPacket(BitStream* parameters, PacketPriority priority, PacketReliabil
 					if (set.fakeheadshot)
 					{
 						bsGiveDamage.Write<UINT32>(9);
+						cheat_state_text("Body Part: %d", 9);
 					}
 					else
 					{
-						bsGiveDamage.Write(srandom<UINT32>(3, 9));
+						UINT32 part = srandom(3, 9);
+						bsGiveDamage.Write(part);
+						cheat_state_text("Body Part: %d", part);
 					}
 
 					g_RakClient->RPC(RPC_GiveTakeDamage, &bsGiveDamage, HIGH_PRIORITY, RELIABLE_SEQUENCED, NULL, false);
@@ -3867,7 +3917,7 @@ void cmd_damagedoors(char* params)
 
 	DamageVehicleDoor(atoi(params));
 
-	addMessageToChatWindow("{FFFFFF}Broke the {00CCFF}right door{FFFFFF}. Restream (enter & exit) to sync.");
+	addMessageToChatWindow("{FFFFFF}Broke the {00CCFF}doors{FFFFFF}. Restream (enter & exit) to sync.");
 	addMessageToChatWindow("{FFFFFF}In some servers you have to G-Bug or enter the car, exit and then restream for effect.");
 }
 
@@ -3882,6 +3932,7 @@ void cmd_takedmgrpc(char* params)
 	{
 		addMessageToChatWindow("/.takedmgrpc [PlayerID] [Amount] [WeaponID]");
 		addMessageToChatWindow("Try illegal weapon id's such as 38 to get player banned.");
+		addMessageToChatWindow("TIP: LSHIFT + END will repeat last input chat or hack command, use it to spam. Hold for more faster");
 		return;
 	}
 	BitStream parameters;
@@ -3905,6 +3956,7 @@ void cmd_meleedmg(char* params)
 	{
 		addMessageToChatWindow("/meleedmg [PlayerID] (optional: 1, 2, 3, 4)");
 		addMessageToChatWindow("Optional will be the amount preset, 1-4 which is 1, 2, 5, 6 default melee damage, if not a preset then its the damage amount");
+		addMessageToChatWindow("TIP: LSHIFT + END will repeat last input chat or hack command, use it to spam. Hold for more faster");
 		return;
 	}
 
@@ -7181,7 +7233,7 @@ void clickDamageDoors()
 					DamageVehicleDoor(getSAMPVehicleIDFromGTAVehicle(pVehicle));
 					const struct vehicle_entry* vehicleEntry = gta_vehicle_get_by_id(pCVehicleTeleport->GetModelIndex());
 
-					addMessageToChatWindow("{FFFFFF}Broke %s's {00CCFF}right door{FFFFFF}. Restream (enter & exit) to sync.", vehicleEntry->name);
+					addMessageToChatWindow("{FFFFFF}Broke %s's {00CCFF}doors{FFFFFF}. Restream (enter & exit) to sync.", vehicleEntry->name);
 					addMessageToChatWindow("{FFFFFF}In some servers you have to G-Bug or enter the car, exit and then restream for effect.");
 				}
 			}

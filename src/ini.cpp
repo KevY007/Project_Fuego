@@ -173,7 +173,7 @@ static int parse_int ( const char *str )
 	return strtol( str, NULL, 0 );
 }
 
-static int key_lookup ( const char *name )
+int key_lookup ( const char *name )
 {
 	if ( name[0] && !name[1] )
 	{

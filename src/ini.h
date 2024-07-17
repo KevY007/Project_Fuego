@@ -521,3 +521,4 @@ void					ini_load ( void );
 void					ini_reload ( void );
 void					ini_free ( void );
 void					ini_load_setSettings( void );
+int key_lookup(const char* name);
