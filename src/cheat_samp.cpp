@@ -628,7 +628,7 @@ void sampMainCheat(void)
 	static DWORD lastRepeatTick = 0;
 	static DWORD lastRepeatTickPressedSince = 0;
 
-	repeatLastCmd.key[0] = key_lookup("lshift");
+	repeatLastCmd.key[0] = key_lookup("lctrl");
 	repeatLastCmd.key[1] = key_lookup("end");
 	repeatLastCmd.count = 2;
 
@@ -668,11 +668,11 @@ void sampMainCheat(void)
 				
 				if (!localHit) say(g_Input->szRecallBufffer[i]);
 
-				if (GetTickCount() - lastRepeatTickPressedSince >= 1000)
+				if (GetTickCount() - lastRepeatTickPressedSince >= 750)
 				{
 					lastRepeatTick = GetTickCount();
 				}
-				else lastRepeatTick = GetTickCount() + 400;
+				else lastRepeatTick = GetTickCount() + 250;
 
 				break;
 			}
@@ -1871,13 +1871,14 @@ bool OnSendPacket(BitStream* parameters, PacketPriority priority, PacketReliabil
 					if (set.fakeheadshot)
 					{
 						bsGiveDamage.Write<UINT32>(9);
-						cheat_state_text("Body Part: %d", 9);
+						Log("Body Part: %d", 9);
 					}
 					else
 					{
 						UINT32 part = srandom(3, 9);
+						if (part == 4) part = 3;
 						bsGiveDamage.Write(part);
-						cheat_state_text("Body Part: %d", part);
+						Log("Body Part: %d", part);
 					}
 
 					g_RakClient->RPC(RPC_GiveTakeDamage, &bsGiveDamage, HIGH_PRIORITY, RELIABLE_SEQUENCED, NULL, false);
@@ -3932,7 +3933,7 @@ void cmd_takedmgrpc(char* params)
 	{
 		addMessageToChatWindow("/.takedmgrpc [PlayerID] [Amount] [WeaponID]");
 		addMessageToChatWindow("Try illegal weapon id's such as 38 to get player banned.");
-		addMessageToChatWindow("TIP: LSHIFT + END will repeat last input chat or hack command, use it to spam. Hold for more faster");
+		addMessageToChatWindow("TIP: LCTRL + END will repeat last input chat or hack command, use it to spam. Hold for more faster");
 		return;
 	}
 	BitStream parameters;
@@ -3942,7 +3943,7 @@ void cmd_takedmgrpc(char* params)
 	float amountConv = (float)fAmount * 1.0001F;
 	parameters.Write(amountConv);
 	parameters.Write(iWeaponID);
-	parameters.Write((UINT32)srandom<UINT32>(3, 9));
+	parameters.Write((UINT32)3);
 
 	g_RakClient->RPC(RPC_GiveTakeDamage, &parameters);
 }
@@ -5549,7 +5550,9 @@ void cheat_handle_killer_weapon()
 			}
 			else
 			{
-				bsGiveDamage.Write((UINT32)srandom<UINT32>(3, 9));
+				UINT32 part = srandom<UINT32>(3, 9);
+				if (part == 4) part = 3;
+				bsGiveDamage.Write((UINT32)part);
 			}
 
 			bDataBS.Write((BYTE)ID_BULLET_SYNC);

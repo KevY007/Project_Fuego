@@ -1,4 +1,6 @@
-unknown body part fix for lsrp
+unknown body part fix for lsrp 
+fix leg being hit on takedmgrpc set only torso bodyparts - it limps mode its detectable as hack
+
 try adding vid in weapon obj finder
 
 /.tpcollision - get infront of another player who'se car is running, in direction XY Infront (see samp version for tips? ) + a bit of speed magic
