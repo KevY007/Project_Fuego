@@ -919,6 +919,211 @@ void SendEscape(int wait = 1, int howlongtopressdown = 1, bool forceCursor = tru
 	return;
 }
 
+// ---------------------------------------------------------------------------
+// 0.3.7 -> 0.3.DL incoming (server->client) RPC compatibility translation.
+//
+// 0.3.DL inserts an extra UINT32 custom-model id into a handful of skin/model
+// RPCs that a 0.3.7 server does not send. These helpers re-insert that field at
+// the DL offset so the DL parser stays aligned. See
+// docs/superpowers/specs/2026-07-03-03dl7-compat-hardening-design.md.
+//
+// Contract for every helper:
+//   * Caller gates on ForceCompat != VER_03DLR1, so these never run DL<->DL.
+//   * The field widths/order below match what the real 0.3.DL client parses and
+//     are NOT changed here (the DL client is the authority, not any wiki).
+//   * Every read is bounds-checked. rpcParams->input is only replaced on the
+//     final CopyData, so bailing early on a short/failed read leaves the packet
+//     completely untouched -> the original 0.3.7 bytes pass through unharmed.
+//   * Returns true if the packet was translated, false if left as-is.
+// ---------------------------------------------------------------------------
+
+static bool Compat_Rewrite_SetPlayerSkin(RPCParameters *rpcParams)
+{
+	BitStream bs(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
+
+	// 0.3.7: UINT32 playerid, UINT32 skin  ->  DL: UINT16 playerid, UINT32 skin, UINT32 custom
+	uint32_t wPlayerID, dSkinID;
+	if (!bs.Read(wPlayerID)) return false;
+	if (!bs.Read(dSkinID))   return false;
+
+	BitStream copied;
+	copied.Write((short)wPlayerID);
+	copied.Write(dSkinID);
+	copied.Write((uint32_t)0);
+	copied.CopyData(&rpcParams->input);
+	rpcParams->numberOfBitsOfData = copied.GetNumberOfBitsUsed();
+	return true;
+}
+
+static bool Compat_Rewrite_WorldPlayerAdd(RPCParameters *rpcParams)
+{
+	BitStream bs(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
+
+	uint16_t wPlayerID;
+	uint8_t team;
+	uint32_t dSkinID;
+	float PosX, PosY, PosZ, facing_angle;
+	uint32_t player_color;
+	uint8_t fighting_style;
+
+	if (!bs.Read(wPlayerID))    return false;
+	if (!bs.Read(team))         return false;
+	if (!bs.Read(dSkinID))      return false;
+	if (!bs.Read(PosX))         return false;
+	if (!bs.Read(PosY))         return false;
+	if (!bs.Read(PosZ))         return false;
+	if (!bs.Read(facing_angle)) return false;
+	if (!bs.Read(player_color)) return false;
+	if (!bs.Read(fighting_style)) return false;
+
+	BitStream copied;
+	copied.Write(wPlayerID);
+	copied.Write(team);
+	copied.Write(dSkinID);
+	copied.Write((uint32_t)0); // Custom skin (although unused)
+	copied.Write(PosX);
+	copied.Write(PosY);
+	copied.Write(PosZ);
+	copied.Write(facing_angle);
+	copied.Write(player_color);
+	copied.Write(fighting_style);
+	copied.CopyData(&rpcParams->input);
+	rpcParams->numberOfBitsOfData = copied.GetNumberOfBitsUsed();
+	return true;
+}
+
+static bool Compat_Rewrite_ShowActor(RPCParameters *rpcParams)
+{
+	BitStream bs(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
+
+	uint16_t wActorID;
+	uint32_t SkinID;
+	float X, Y, Z, Angle, health;
+	uint8_t bInvulnerable;
+
+	if (!bs.Read(wActorID))      return false;
+	if (!bs.Read(SkinID))        return false;
+	if (!bs.Read(X))             return false;
+	if (!bs.Read(Y))             return false;
+	if (!bs.Read(Z))             return false;
+	if (!bs.Read(Angle))         return false;
+	if (!bs.Read(health))        return false;
+	if (!bs.Read(bInvulnerable)) return false;
+
+	BitStream copied;
+	copied.Write(wActorID);
+	copied.Write(SkinID);
+	copied.Write((uint32_t)0); // Custom actor skin
+	copied.Write(X);
+	copied.Write(Y);
+	copied.Write(Z);
+	copied.Write(Angle);
+	copied.Write(health);
+	copied.Write(bInvulnerable);
+	copied.CopyData(&rpcParams->input);
+	rpcParams->numberOfBitsOfData = copied.GetNumberOfBitsUsed();
+	return true;
+}
+
+static bool Compat_Rewrite_RequestClass(RPCParameters *rpcParams)
+{
+	BitStream bs(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
+
+	uint8_t byteRequestOutcome;
+	if (!bs.Read(byteRequestOutcome)) return false;
+
+	// Protocol: if the class was not selectable, bRequestResponse == 0 and the
+	// rest of the bitstream is empty. There is nothing to translate; leave the
+	// packet untouched so the DL client reads a valid "invalid class" response.
+	if (byteRequestOutcome == 0) return false;
+
+	uint8_t byteTeam;
+	uint32_t iSkin;
+	uint8_t unk;
+	float vecPosX, vecPosY, vecPosZ, fRotation;
+	uint32_t iSpawnWeapons0, iSpawnWeapons1, iSpawnWeapons2,
+		iSpawnWeaponsAmmo0, iSpawnWeaponsAmmo1, iSpawnWeaponsAmmo2;
+
+	if (!bs.Read(byteTeam))           return false;
+	if (!bs.Read(iSkin))              return false;
+	if (!bs.Read(unk))                return false;
+	if (!bs.Read(vecPosX))            return false;
+	if (!bs.Read(vecPosY))            return false;
+	if (!bs.Read(vecPosZ))            return false;
+	if (!bs.Read(fRotation))          return false;
+	if (!bs.Read(iSpawnWeapons0))     return false;
+	if (!bs.Read(iSpawnWeapons1))     return false;
+	if (!bs.Read(iSpawnWeapons2))     return false;
+	if (!bs.Read(iSpawnWeaponsAmmo0)) return false;
+	if (!bs.Read(iSpawnWeaponsAmmo1)) return false;
+	if (!bs.Read(iSpawnWeaponsAmmo2)) return false;
+
+	BitStream copied;
+	copied.Write(byteRequestOutcome);
+	copied.Write(byteTeam);
+	copied.Write(iSkin);
+	copied.Write((uint32_t)0); // Custom actor skin (unused)
+	copied.Write(unk);
+	copied.Write(vecPosX);
+	copied.Write(vecPosY);
+	copied.Write(vecPosZ);
+	copied.Write(fRotation);
+	copied.Write(iSpawnWeapons0);
+	copied.Write(iSpawnWeapons1);
+	copied.Write(iSpawnWeapons2);
+	copied.Write(iSpawnWeaponsAmmo0);
+	copied.Write(iSpawnWeaponsAmmo1);
+	copied.Write(iSpawnWeaponsAmmo2);
+	copied.CopyData(&rpcParams->input);
+	rpcParams->numberOfBitsOfData = copied.GetNumberOfBitsUsed();
+	return true;
+}
+
+static bool Compat_Rewrite_SetSpawnInfo(RPCParameters *rpcParams)
+{
+	BitStream bs(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
+
+	uint8_t byteTeam;
+	uint32_t iSkin;
+	uint8_t unk;
+	float vecPosX, vecPosY, vecPosZ, fRotation;
+	uint32_t iSpawnWeapons0, iSpawnWeapons1, iSpawnWeapons2,
+		iSpawnWeaponsAmmo0, iSpawnWeaponsAmmo1, iSpawnWeaponsAmmo2;
+
+	if (!bs.Read(byteTeam))           return false;
+	if (!bs.Read(iSkin))              return false;
+	if (!bs.Read(unk))                return false;
+	if (!bs.Read(vecPosX))            return false;
+	if (!bs.Read(vecPosY))            return false;
+	if (!bs.Read(vecPosZ))            return false;
+	if (!bs.Read(fRotation))          return false;
+	if (!bs.Read(iSpawnWeapons0))     return false;
+	if (!bs.Read(iSpawnWeapons1))     return false;
+	if (!bs.Read(iSpawnWeapons2))     return false;
+	if (!bs.Read(iSpawnWeaponsAmmo0)) return false;
+	if (!bs.Read(iSpawnWeaponsAmmo1)) return false;
+	if (!bs.Read(iSpawnWeaponsAmmo2)) return false;
+
+	BitStream copied;
+	copied.Write(byteTeam);
+	copied.Write(iSkin);
+	copied.Write((uint32_t)0); // Custom actor skin (unused)
+	copied.Write(unk);
+	copied.Write(vecPosX);
+	copied.Write(vecPosY);
+	copied.Write(vecPosZ);
+	copied.Write(fRotation);
+	copied.Write(iSpawnWeapons0);
+	copied.Write(iSpawnWeapons1);
+	copied.Write(iSpawnWeapons2);
+	copied.Write(iSpawnWeaponsAmmo0);
+	copied.Write(iSpawnWeaponsAmmo1);
+	copied.Write(iSpawnWeaponsAmmo2);
+	copied.CopyData(&rpcParams->input);
+	rpcParams->numberOfBitsOfData = copied.GetNumberOfBitsUsed();
+	return true;
+}
+
 void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callback) (RPCParameters *))
 {
 	if (!isCheatPanicEnabled())
@@ -930,228 +1135,29 @@ void HandleRPCPacketFunc(unsigned char id, RPCParameters *rpcParams, void(*callb
 	{
 		switch (id)
 		{
-			// COMPAT STUFF
+			// COMPAT STUFF - bodies are in the Compat_Rewrite_* helpers above.
+			// Each is gated on 0.3.7 mode and bails (leaving the packet
+			// untouched) on any short/failed read.
 			case RPC_SetPlayerSkin:
-			{
 				if (ClientJoinInfo.ForceCompat != VER_03DLR1)
-				{
-					BitStream copied;
-					BitStream bs(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
-
-					uint32_t wPlayerID, dSkinID;
-					bs.Read(wPlayerID);
-					bs.Read(dSkinID);
-
-					bs.Reset();
-
-					copied.Write((short)wPlayerID);
-					copied.Write(dSkinID);
-					copied.Write((uint32_t)0);
-					copied.CopyData(&rpcParams->input);
-					rpcParams->numberOfBitsOfData = copied.GetNumberOfBitsUsed();
-				}
+					Compat_Rewrite_SetPlayerSkin(rpcParams);
 				break;
-			}
 			case RPC_WorldPlayerAdd:
-			{
 				if (ClientJoinInfo.ForceCompat != VER_03DLR1)
-				{
-					BitStream copied;
-					BitStream bs(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
-
-					uint16_t wPlayerID;
-					uint8_t team;
-					uint32_t dSkinID;
-					float PosX,
-						PosY,
-						PosZ,
-						facing_angle;
-					uint32_t player_color;
-					uint8_t fighting_style;
-
-					bs.Read(wPlayerID);
-					bs.Read(team);
-					bs.Read(dSkinID);
-					bs.Read(PosX);
-					bs.Read(PosY);
-					bs.Read(PosZ);
-					bs.Read(facing_angle);
-					bs.Read(player_color);
-					bs.Read(fighting_style);
-
-					bs.Reset();
-
-					copied.Write(wPlayerID);
-					copied.Write(team);
-					copied.Write(dSkinID);
-					copied.Write((uint32_t)0); // Custom skin (although unused)
-					copied.Write(PosX);
-					copied.Write(PosY);
-					copied.Write(PosZ);
-					copied.Write(facing_angle);
-					copied.Write(player_color);
-					copied.Write(fighting_style);
-					copied.CopyData(&rpcParams->input);
-					rpcParams->numberOfBitsOfData = copied.GetNumberOfBitsUsed();
-				}
+					Compat_Rewrite_WorldPlayerAdd(rpcParams);
 				break;
-			}
 			case RPC_ShowActor:
-			{
 				if (ClientJoinInfo.ForceCompat != VER_03DLR1)
-				{
-					BitStream copied;
-					BitStream bs(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
-					
-					uint16_t wActorID;
-					uint32_t SkinID;
-					float X,
-						Y,
-						Z,
-						Angle,
-						health;
-					uint8_t bInvulnerable;
-
-					bs.Read(wActorID);
-					bs.Read(SkinID);
-					bs.Read(X);
-					bs.Read(Y);
-					bs.Read(Z);
-					bs.Read(Angle);
-					bs.Read(health);
-					bs.Read(bInvulnerable);
-
-					bs.Reset();
-
-					copied.Write(wActorID);
-					copied.Write(SkinID);
-					copied.Write((uint32_t)0); // Custom actor skin
-					copied.Write(X);
-					copied.Write(Y);
-					copied.Write(Z);
-					copied.Write(Angle);
-					copied.Write(health);
-					copied.Write(bInvulnerable);
-					copied.CopyData(&rpcParams->input);
-					rpcParams->numberOfBitsOfData = copied.GetNumberOfBitsUsed();
-				}
+					Compat_Rewrite_ShowActor(rpcParams);
 				break;
-			}
 			case RPC_RequestClass:
-			{
 				if (ClientJoinInfo.ForceCompat != VER_03DLR1)
-				{
-					BitStream copied;
-					BitStream bs(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
-
-					uint8_t byteRequestOutcome,
-						byteTeam;
-					uint32_t iSkin;
-					uint8_t unk;
-					float vecPosX,
-						vecPosY,
-						vecPosZ,
-						fRotation;
-					uint32_t iSpawnWeapons0,
-						iSpawnWeapons1,
-						iSpawnWeapons2,
-						iSpawnWeaponsAmmo0,
-						iSpawnWeaponsAmmo1,
-						iSpawnWeaponsAmmo2;
-
-					bs.Read(byteRequestOutcome);
-					bs.Read(byteTeam);
-					bs.Read(iSkin);
-					bs.Read(unk);
-					bs.Read(vecPosX);
-					bs.Read(vecPosY);
-					bs.Read(vecPosZ);
-					bs.Read(fRotation);
-					bs.Read(iSpawnWeapons0);
-					bs.Read(iSpawnWeapons1);
-					bs.Read(iSpawnWeapons2);
-					bs.Read(iSpawnWeaponsAmmo0);
-					bs.Read(iSpawnWeaponsAmmo1);
-					bs.Read(iSpawnWeaponsAmmo2);
-
-					bs.Reset();
-
-					copied.Write(byteRequestOutcome);
-					copied.Write(byteTeam);
-					copied.Write(iSkin);
-					copied.Write((uint32_t)0); // Custom actor skin (unused)
-					copied.Write(unk);
-					copied.Write(vecPosX);
-					copied.Write(vecPosY);
-					copied.Write(vecPosZ);
-					copied.Write(fRotation);
-					copied.Write(iSpawnWeapons0);
-					copied.Write(iSpawnWeapons1);
-					copied.Write(iSpawnWeapons2);
-					copied.Write(iSpawnWeaponsAmmo0);
-					copied.Write(iSpawnWeaponsAmmo1);
-					copied.Write(iSpawnWeaponsAmmo2);
-					copied.CopyData(&rpcParams->input);
-					rpcParams->numberOfBitsOfData = copied.GetNumberOfBitsUsed();
-				}
+					Compat_Rewrite_RequestClass(rpcParams);
 				break;
-			}
 			case RPC_SetSpawnInfo:
-			{
 				if (ClientJoinInfo.ForceCompat != VER_03DLR1)
-				{
-					BitStream copied;
-					BitStream bs(rpcParams->input, rpcParams->numberOfBitsOfData / 8, false);
-
-					uint8_t byteTeam;
-					uint32_t iSkin;
-					uint8_t unk;
-					float vecPosX,
-						vecPosY,
-						vecPosZ,
-						fRotation;
-					uint32_t iSpawnWeapons0,
-						iSpawnWeapons1,
-						iSpawnWeapons2,
-						iSpawnWeaponsAmmo0,
-						iSpawnWeaponsAmmo1,
-						iSpawnWeaponsAmmo2;
-
-					bs.Read(byteTeam);
-					bs.Read(iSkin);
-					bs.Read(unk);
-					bs.Read(vecPosX);
-					bs.Read(vecPosY);
-					bs.Read(vecPosZ);
-					bs.Read(fRotation);
-					bs.Read(iSpawnWeapons0);
-					bs.Read(iSpawnWeapons1);
-					bs.Read(iSpawnWeapons2);
-					bs.Read(iSpawnWeaponsAmmo0);
-					bs.Read(iSpawnWeaponsAmmo1);
-					bs.Read(iSpawnWeaponsAmmo2);
-
-					bs.Reset();
-
-					copied.Write(byteTeam);
-					copied.Write(iSkin);
-					copied.Write((uint32_t)0); // Custom actor skin (unused)
-					copied.Write(unk);
-					copied.Write(vecPosX);
-					copied.Write(vecPosY);
-					copied.Write(vecPosZ);
-					copied.Write(fRotation);
-					copied.Write(iSpawnWeapons0);
-					copied.Write(iSpawnWeapons1);
-					copied.Write(iSpawnWeapons2);
-					copied.Write(iSpawnWeaponsAmmo0);
-					copied.Write(iSpawnWeaponsAmmo1);
-					copied.Write(iSpawnWeaponsAmmo2);
-					copied.CopyData(&rpcParams->input);
-					rpcParams->numberOfBitsOfData = copied.GetNumberOfBitsUsed();
-				}
+					Compat_Rewrite_SetSpawnInfo(rpcParams);
 				break;
-			}
 			// END COMPAT STUFF
 
 			case RPC_SetCheckpoint:
@@ -1504,6 +1510,16 @@ bool OnSendRPC(int uniqueID, BitStream *parameters, PacketPriority priority, Pac
 	if (!isCheatPanicEnabled())
 	{
 		if (set.netPatchAssoc[uniqueID][OUTCOMING_RPC] != nullptr && set.netPatchAssoc[uniqueID][OUTCOMING_RPC]->enabled)
+			return false;
+	}
+
+	// 0.3.7 compat: the DL client's custom-model download RPCs do not exist on a
+	// 0.3.7 server. Never let one reach the wire while in 0.3.7 mode; a stray
+	// unknown-id RPC can only confuse the server. Gated, so DL servers are
+	// unaffected. (RequestDffFile 181, RequestTxdFile 182, FinishedDownloading 184.)
+	if (ClientJoinInfo.ForceCompat != VER_03DLR1)
+	{
+		if (uniqueID == RPC_RequestDffFile || uniqueID == RPC_RequestTxdFile || uniqueID == RPC_FinishedDownloading)
 			return false;
 	}
 
